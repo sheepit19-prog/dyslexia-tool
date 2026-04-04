@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Dyslexia Tool",
+  "version": "0.1.0",
+  "description": "Invisible companion for dyslexic users—proactive help without judgment",
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Dyslexia Tool",
+    "default_icon": {
+      "16": "icons/icon16.svg",
+      "48": "icons/icon48.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "assets/index.tsx-Me88jFrE.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "src/content/styles.css"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "options_page": "options/index.html",
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "fonts/*",
+        "icons/*",
+        "src/offscreen-html/*",
+        "assets/index.tsx-Me88jFrE.js",
+        "assets/index.tsx-Me88jFrE.js.map"
+      ],
+      "use_dynamic_url": false
+    }
+  ],
+  "minimum_chrome_version": "90"
+}

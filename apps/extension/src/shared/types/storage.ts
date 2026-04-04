@@ -1,0 +1,49 @@
+/**
+ * Shared storage types
+ */
+
+export interface Settings {
+  id: 'global'
+  fontEnabled: boolean
+  fontFamily: 'OpenDyslexic' | 'Arial' | 'Verdana' | 'system'
+  lineSpacing: number // 1.0 - 2.0
+  letterSpacing: number // 0 - 0.1em
+  companionMode: 'proactive' | 'reactive' | 'off'
+  companionSensitivity: number // 1-10
+  theme: 'light' | 'dark' | 'system'
+  accentColor: string
+  ttsSpeed: number // 0.5 - 2.0
+  analyticsEnabled: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Note {
+  id: string // UUID
+  title: string | null
+  audioBlob: Blob
+  duration: number // seconds
+  transcript: string | null
+  tags: string[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface SitePreference {
+  id: string // domain name
+  fontEnabled: boolean | null // null = use global
+  lineSpacing: number | null
+  letterSpacing: number | null
+  companionEnabled: boolean | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Analytics {
+  id: string // date string YYYY-MM-DD
+  featuresUsed: Record<string, number>
+  sessionDuration: number // seconds
+  sitesVisited: number
+  interventionsAccepted: number
+  interventionsDismissed: number
+}
