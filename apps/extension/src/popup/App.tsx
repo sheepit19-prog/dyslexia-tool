@@ -1,26 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Settings } from '../shared/types/storage'
 
-// Helper: convert Blob to base64 string (survives Chrome message passing)
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
-
-// Helper: convert base64 data URL to Blob
-function base64ToBlob(dataUrl: string): Blob {
-  const [meta, b64] = dataUrl.split(',')
-  const mimeMatch = meta.match(/:(.*?);/)
-  const mime = mimeMatch ? mimeMatch[1] : 'audio/webm'
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new Blob([bytes], { type: mime })
-}
+// Direct IndexedDB access — popup and background share the same DB (same extension origin)
+// This avoids Chrome message passing for audio data, which silently drops Blobs/ArrayBuffers
+import { getNotes as dbGetNotes, addNote as dbAddNote, deleteNote as dbDeleteNote, getNoteAudio as dbGetNoteAudio, getNotesCount as dbGetNotesCount } from '../background/storage'
 
 const DEFAULT_SETTINGS: Settings = {
   id: 'global',
@@ -64,8 +47,8 @@ export function App() {
             type: 'COMPANION_SET_ENABLED',
             payload: { enabled: settings.companionMode === 'proactive' }
           })
-        } catch (error) {
-          console.warn('[Popup] Failed to send companion status:', error)
+        } catch {
+          // Content script not on this page (e.g. chrome:// pages)
         }
       }
     })
@@ -79,8 +62,8 @@ export function App() {
           setSettings(result.settings)
         }
         await loadNotes()
-      } catch (error) {
-        console.error('[Popup] Failed to load data:', error)
+      } catch (err) {
+        console.error('[Popup] Failed to load data:', err)
         setError('Failed to load settings')
       } finally {
         setLoading(false)
@@ -89,15 +72,20 @@ export function App() {
     loadData()
   }, [])
 
+  // Load notes directly from IndexedDB — no message passing
   const loadNotes = async () => {
     try {
-      const response = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
-      if (response.success && response.notes) {
-        setNotes(response.notes)
-        setNoteCount(response.notes.length)
-      }
-    } catch (error) {
-      console.error('[Popup] Failed to load notes:', error)
+      const allNotes = await dbGetNotes(50)
+      setNotes(allNotes.map(n => ({
+        id: n.id,
+        title: n.title,
+        duration: n.duration,
+        createdAt: n.createdAt
+      })))
+      const count = await dbGetNotesCount()
+      setNoteCount(count)
+    } catch (err) {
+      console.error('[Popup] Failed to load notes:', err)
     }
   }
 
@@ -107,10 +95,12 @@ export function App() {
     await chrome.storage.local.set({ settings: newSettings })
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
-      await chrome.tabs.sendMessage(tab.id, {
-        type: 'FONT_APPLY_SETTINGS',
-        payload: { enabled, fontFamily: settings.fontFamily, lineHeight: settings.lineSpacing }
-      })
+      try {
+        await chrome.tabs.sendMessage(tab.id, {
+          type: 'FONT_APPLY_SETTINGS',
+          payload: { enabled, fontFamily: settings.fontFamily, lineHeight: settings.lineSpacing }
+        })
+      } catch { /* content script not loaded */ }
     }
   }
 
@@ -120,7 +110,7 @@ export function App() {
       if (tab?.id) {
         await chrome.tabs.sendMessage(tab.id, { type: 'TTS_READ_SELECTION' })
       }
-    } catch (error) {
+    } catch {
       alert('Please select some text first.')
     }
   }
@@ -129,7 +119,9 @@ export function App() {
     setReadingRulerEnabled(enabled)
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
-      await chrome.tabs.sendMessage(tab.id, { type: 'READING_RULER_TOGGLE', payload: { enabled } })
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: 'READING_RULER_TOGGLE', payload: { enabled } })
+      } catch { /* content script not loaded */ }
     }
   }
 
@@ -146,22 +138,20 @@ export function App() {
           type: 'COMPANION_SET_ENABLED',
           payload: { enabled: !companionEnabled }
         })
-      } catch (error) {
-        console.warn('[Popup] Failed to send companion toggle:', error)
-      }
+      } catch { /* content script not loaded */ }
     }
   }
 
   const startRecording = async () => {
     try {
-      // Check monthly limit first
-      const countResp = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
-      if (countResp.success && countResp.notes?.length >= 50) {
+      // Check monthly limit
+      const count = await dbGetNotesCount()
+      if (count >= 50) {
         alert('Monthly note limit reached (50 notes).')
         return
       }
 
-      // Request mic directly from popup — popup is a visible context with user gesture
+      // Request mic permission — popup is a visible context, this works
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       chunksRef.current = []
       const recorder = new MediaRecorder(stream)
@@ -179,23 +169,22 @@ export function App() {
         stream.getTracks().forEach(track => track.stop())
 
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        const duration = (Date.now() - startTimeRef.current) / 1000
+        const duration = Math.round((Date.now() - startTimeRef.current) / 100) / 10
         chunksRef.current = []
         mediaRecorderRef.current = null
 
-        // Convert to base64 for Chrome message passing (ArrayBuffer/Blob don't serialize reliably)
-        const audioBase64 = await blobToBase64(audioBlob)
+        // Save directly to IndexedDB — no message passing needed!
         try {
-          const response = await chrome.runtime.sendMessage({
-            type: 'SAVE_RECORDED_NOTE',
-            audioBase64,
-            duration: Math.round(duration * 10) / 10
+          const currentCount = await dbGetNotesCount()
+          const title = `Voice Note #${currentCount + 1} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+          await dbAddNote({
+            title,
+            audioBlob,
+            duration,
+            transcript: null,
+            tags: []
           })
-          if (response?.success) {
-            await loadNotes()
-          } else {
-            alert('Failed to save note: ' + (response?.error || 'Unknown error'))
-          }
+          await loadNotes()
         } catch (err: any) {
           alert('Error saving note: ' + (err.message || 'Unknown error'))
         }
@@ -206,18 +195,15 @@ export function App() {
       recorder.start()
       setIsRecording(true)
 
-      // Start timer
+      // Start live timer
       timerRef.current = setInterval(() => {
         setRecordingTime(Math.floor((Date.now() - startTimeRef.current) / 1000))
       }, 200)
 
-      // Tell background about recording state
-      chrome.runtime.sendMessage({ type: 'RECORDING_STATE_UPDATE', isRecording: true }).catch(() => {})
-
     } catch (err: any) {
       setIsRecording(false)
       if (err.name === 'NotAllowedError') {
-        alert('Microphone permission is required. Please allow access and try again.')
+        alert('Microphone permission is required.\n\nPlease click "Allow" when Chrome asks for microphone access.')
       } else {
         alert('Recording error: ' + (err.message || 'Unknown error'))
       }
@@ -227,7 +213,6 @@ export function App() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
-      chrome.runtime.sendMessage({ type: 'RECORDING_STATE_UPDATE', isRecording: false }).catch(() => {})
     }
   }
 
@@ -243,30 +228,30 @@ export function App() {
     if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
 
     try {
-      // Request audio as base64 string (only strings reliably survive Chrome message passing)
-      const response = await chrome.runtime.sendMessage({ type: 'GET_NOTE_AUDIO', noteId })
-      if (response.success && response.audioBase64) {
-        const blob = base64ToBlob(response.audioBase64)
-        const url = URL.createObjectURL(blob)
+      // Read audio Blob directly from IndexedDB — no serialization!
+      const audioBlob = await dbGetNoteAudio(noteId)
+      if (audioBlob) {
+        const url = URL.createObjectURL(audioBlob)
         const audio = new Audio(url)
         audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; setPlayingNoteId(null) }
+        audio.onerror = () => { URL.revokeObjectURL(url); audioRef.current = null; setPlayingNoteId(null); console.error('[Popup] Audio playback error') }
         audioRef.current = audio
         audio.play()
         setPlayingNoteId(noteId)
       } else {
-        console.error('[Popup] No audio data returned:', response.error)
+        console.error('[Popup] No audio data found for note:', noteId)
       }
-    } catch (error) {
-      console.error('[Popup] Playback failed:', error)
+    } catch (err) {
+      console.error('[Popup] Playback failed:', err)
     }
   }
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      const response = await chrome.runtime.sendMessage({ type: 'DELETE_NOTE', noteId })
-      if (response.success) await loadNotes()
-    } catch (error) {
-      console.error('[Popup] Delete failed:', error)
+      await dbDeleteNote(noteId)
+      await loadNotes()
+    } catch (err) {
+      console.error('[Popup] Delete failed:', err)
     }
   }
 
