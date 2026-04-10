@@ -3,6 +3,7 @@ import {
   getNotes, 
   deleteNote,
   getNotesCount,
+  getNoteAudio,
   getSitePreference,
   saveSitePreference,
   trackFeatureUsage,
@@ -104,8 +105,10 @@ async function handleStopRecording(): Promise<{ success: boolean; error?: string
     }
 
     const audioBlob = new Blob([response.audioData], { type: 'audio/webm' })
+    const currentCount = await getNotesCount()
+    const title = `Voice Note #${currentCount} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     await addNote({
-      title: null,
+      title,
       audioBlob,
       duration: response.duration,
       transcript: null,
@@ -149,24 +152,6 @@ async function handleGetNotes(): Promise<{ success: boolean; notes?: any[]; erro
   }
 }
 
-async function handleNoteSave(payload: { audioData: ArrayBuffer; duration: number }): Promise<{ success: boolean; error?: string }> {
-  try {
-    const audioBlob = new Blob([payload.audioData], { type: 'audio/webm' })
-    await addNote({
-      title: null,
-      audioBlob,
-      duration: payload.duration,
-      transcript: null,
-      tags: []
-    })
-    await trackFeatureUsage('note_saved')
-    return { success: true }
-  } catch (error) {
-    console.error('[Service Worker] Note save failed:', error)
-    return { success: false, error: 'Failed to save note' }
-  }
-}
-
 async function handleDeleteNote(noteId: string): Promise<{ success: boolean }> {
   try {
     await deleteNote(noteId)
@@ -186,6 +171,17 @@ async function handleGetSitePreference(domain: string): Promise<{ success: boole
 async function handleSaveSitePreference(preference: any): Promise<{ success: boolean }> {
   await saveSitePreference(preference)
   return { success: true }
+}
+
+async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; audioBlob?: Blob; error?: string }> {
+  try {
+    const audioBlob = await getNoteAudio(noteId)
+    if (!audioBlob) return { success: false, error: 'Note not found' }
+    return { success: true, audioBlob }
+  } catch (error) {
+    console.error('[Service Worker] Get note audio failed:', error)
+    return { success: false, error: 'Failed to get note audio' }
+  }
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -220,11 +216,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'SETTINGS_UPDATE':
         return await handleSettingsUpdate(message as any)
 
-      case 'NOTE_SAVE':
-        return await handleNoteSave(message.payload)
-
       case 'GET_NOTES':
         return await handleGetNotes()
+
+      case 'GET_NOTE_AUDIO':
+        return await handleGetNoteAudio(message.noteId)
 
       case 'DELETE_NOTE':
         return await handleDeleteNote(message.noteId)
