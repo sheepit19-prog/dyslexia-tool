@@ -15,6 +15,7 @@ import type { MessageMap } from '../shared/types/messages'
 initializeStorage().catch(console.error)
 
 let offscreenDocumentReady = false
+let isCurrentlyRecording = false
 
 async function ensureOffscreenDocument(): Promise<void> {
   if (offscreenDocumentReady) return
@@ -70,6 +71,10 @@ async function handleFontMessage(
 }
 
 async function handleStartRecording(): Promise<{ success: boolean; error?: string }> {
+  if (isCurrentlyRecording) {
+    return { success: false, error: 'Already recording' }
+  }
+
   try {
     const count = await getNotesCount()
     if (count >= 50) {
@@ -87,6 +92,7 @@ async function handleStartRecording(): Promise<{ success: boolean; error?: strin
       return { success: false, error: response?.error || 'Failed to start recording' }
     }
 
+    isCurrentlyRecording = true
     await trackFeatureUsage('note_capture_start')
     return { success: true }
   } catch (error: any) {
@@ -105,6 +111,7 @@ async function handleStopRecording(): Promise<{ success: boolean; error?: string
     })
 
     if (!response?.success) {
+      isCurrentlyRecording = false
       return { success: false, error: response?.error || 'Failed to stop recording' }
     }
 
@@ -119,9 +126,11 @@ async function handleStopRecording(): Promise<{ success: boolean; error?: string
       tags: []
     })
 
+    isCurrentlyRecording = false
     await trackFeatureUsage('note_saved')
     return { success: true }
   } catch (error: any) {
+    isCurrentlyRecording = false
     console.error('[Service Worker] Stop recording failed:', error)
     return { success: false, error: error.message || 'Failed to save note' }
   }
@@ -199,20 +208,11 @@ async function handleMicPermissionResult(
 
   if (!granted) {
     console.warn('[Service Worker] Mic permission denied by user')
-    // Notify popup that recording failed
-    chrome.runtime.sendMessage({ type: 'RECORDING_FAILED', error: 'Microphone permission denied' }).catch(() => {})
     return { success: false }
   }
 
   // Permission granted — start recording via offscreen
-  const result = await handleStartRecording()
-  // Notify popup of the outcome
-  if (result.success) {
-    chrome.runtime.sendMessage({ type: 'RECORDING_STARTED' }).catch(() => {})
-  } else {
-    chrome.runtime.sendMessage({ type: 'RECORDING_FAILED', error: result.error }).catch(() => {})
-  }
-  return result
+  return await handleStartRecording()
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -264,6 +264,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       case 'MIC_PERMISSION_RESULT':
         return await handleMicPermissionResult(message.granted, sender)
+
+      case 'GET_RECORDING_STATE':
+        return { isRecording: isCurrentlyRecording }
 
       default:
         console.warn('[Service Worker] Unknown message type:', message.type)

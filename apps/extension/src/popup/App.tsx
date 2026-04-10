@@ -29,21 +29,6 @@ export function App() {
   const [playingNoteId, setPlayingNoteId] = useState<string | null>(null)
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
 
-  // Listen for recording state changes from background
-  useEffect(() => {
-    const listener = (message: any) => {
-      if (message.type === 'RECORDING_STARTED') {
-        setIsRecording(true)
-      }
-      if (message.type === 'RECORDING_FAILED') {
-        setIsRecording(false)
-        alert('Could not start recording: ' + (message.error || 'Unknown error'))
-      }
-    }
-    chrome.runtime.onMessage.addListener(listener)
-    return () => chrome.runtime.onMessage.removeListener(listener)
-  }, [])
-
   useEffect(() => {
     setCompanionEnabled(settings.companionMode === 'proactive')
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
@@ -68,6 +53,11 @@ export function App() {
           setSettings(result.settings)
         }
         await loadNotes()
+        // Query background for current recording state (survives popup close/reopen)
+        const state = await chrome.runtime.sendMessage({ type: 'GET_RECORDING_STATE' })
+        if (state?.isRecording) {
+          setIsRecording(true)
+        }
       } catch (error) {
         console.error('[Popup] Failed to load data:', error)
         setError('Failed to load settings')
@@ -143,10 +133,20 @@ export function App() {
 
   const startRecording = async () => {
     try {
-      // Open mic-permission page in a new tab (popup can't show getUserMedia prompts)
-      // Background listens for MIC_PERMISSION_RESULT and starts recording
-      const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
-      void tab // tab opens permission page — background handles the rest
+      // Try starting recording directly — Chrome may already have mic permission
+      const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' })
+      if (response.success) {
+        setIsRecording(true)
+        return
+      }
+      // If permission-related error, open the permission tab to prompt the user
+      if (response.error && (response.error.includes('Permission') || response.error.includes('permission') || response.error.includes('dismissed'))) {
+        await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
+        // Popup will close when tab opens. Background tracks recording state.
+        // When user reopens popup, GET_RECORDING_STATE will show isRecording=true
+        return
+      }
+      alert('Could not start recording: ' + (response.error || 'Unknown error'))
     } catch (error: any) {
       alert('Recording error: ' + (error.message || 'Unknown error'))
     }
