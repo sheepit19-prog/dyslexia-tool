@@ -14,15 +14,36 @@ import {
 console.log('[Content Script] Dyslexia Tool loaded')
 
 // Inject font styles
-function injectFontStyles(_fontFamily: string = 'OpenDyslexic', lineHeight: number = 1.6) {
-  const fontStack = 'Verdana, Arial, sans-serif'
+function injectFontStyles(fontFamily: string = 'OpenDyslexic', lineHeight: number = 1.6) {
   document.body.classList.add('dyslexia-tool-active')
+
+  // Inject @font-face for OpenDyslexic from extension bundle
+  let fontFaceStyle = document.getElementById('dyslexia-tool-font-face') as HTMLStyleElement | null
+  if (!fontFaceStyle) {
+    fontFaceStyle = document.createElement('style')
+    fontFaceStyle.id = 'dyslexia-tool-font-face'
+    fontFaceStyle.textContent = `
+      @font-face {
+        font-family: 'OpenDyslexic';
+        src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Regular.woff2')}') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OpenDyslexic';
+        src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Bold.woff2')}') format('woff2');
+        font-weight: bold;
+        font-style: normal;
+      }
+    `
+    document.head.appendChild(fontFaceStyle)
+  }
   
   const style = document.createElement('style')
   style.id = 'dyslexia-tool-styles'
   style.textContent = `
     .dyslexia-tool-active * {
-      font-family: ${fontStack} !important;
+      font-family: '${fontFamily}', Verdana, Arial, sans-serif !important;
       line-height: ${lineHeight} !important;
       letter-spacing: 0.05em !important;
       word-spacing: 0.1em !important;
@@ -44,6 +65,15 @@ function getCurrentWord(): { word: string; start: number; end: number } | null {
     activeElement = savedActiveElement
   }
   if (!activeElement) return null
+  
+  // If we have a saved word from before backspacing, use it
+  if (lastFullWord) {
+    const wordData = getCurrentWordFromElement(activeElement)
+    if (wordData) {
+      return { word: lastFullWord, start: wordData.start, end: wordData.end }
+    }
+  }
+  
   return getCurrentWordFromElement(activeElement)
 }
 
@@ -60,12 +90,35 @@ function replaceCurrentWord(newWord: string) {
 // Show spelling suggestions
 function showSpellingSuggestions() {
   const current = getCurrentWord()
-  if (!current) return
+  console.log('[Content Script] showSpellingSuggestions called, current word:', current)
+  
+  if (!current) {
+    console.log('[Content Script] No current word found')
+    return
+  }
   
   const suggestions = generateSpellingSuggestions(current.word)
+  console.log('[Content Script] Suggestions for', current.word, ':', suggestions)
   
   const existing = document.getElementById('dyslexia-tool-suggestions')
   if (existing) existing.remove()
+  
+  // If no suggestions, show a message
+  if (suggestions.length === 0) {
+    const container = document.createElement('div')
+    container.id = 'dyslexia-tool-suggestions'
+    container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:2147483647;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);padding:16px;max-width:320px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:2px solid #F59E0B'
+    container.innerHTML = `
+      <div>
+        <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:#111827">No suggestions for "${current.word}"</p>
+        <p style="margin:0 0 12px;font-size:13px;color:#6B7280">Try: becuase, recieve, beleive, thier, hte, jsut</p>
+        <button id="close-suggestions" style="padding:8px 16px;background:#6B7280;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Close</button>
+      </div>
+    `
+    document.body.appendChild(container)
+    setTimeout(() => { if (container.parentNode) container.remove() }, 5000)
+    return
+  }
   
   const container = document.createElement('div')
   container.id = 'dyslexia-tool-suggestions'
@@ -84,6 +137,7 @@ function showSpellingSuggestions() {
   `
   
   document.body.appendChild(container)
+  console.log('[Content Script] Suggestions panel added to DOM')
   
   // Handle clicks
   setTimeout(() => {
@@ -91,6 +145,7 @@ function showSpellingSuggestions() {
       btn.addEventListener('click', () => {
         const selectedWord = btn.getAttribute('data-word')
         if (selectedWord && replaceCurrentWord(selectedWord)) {
+          lastFullWord = null
           container.remove()
         }
       })
@@ -98,7 +153,10 @@ function showSpellingSuggestions() {
     
     const closeBtn = document.getElementById('close-suggestions')
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => container.remove())
+      closeBtn.addEventListener('click', () => {
+        lastFullWord = null
+        container.remove()
+      })
     }
   }, 10)
   
@@ -132,6 +190,7 @@ function showCompanionNotification(payload: { message: string; type?: 'spelling'
   
   setTimeout(() => {
     document.getElementById(acceptId)?.addEventListener('click', () => {
+      console.log('[Content Script] Show suggestions clicked')
       container.remove()
       if (payload.type === 'spelling') {
         showSpellingSuggestions()
@@ -140,6 +199,8 @@ function showCompanionNotification(payload: { message: string; type?: 'spelling'
     document.getElementById(dismissId)?.addEventListener('click', () => {
       lastOfferTime = 0
       backspaceCount = 0
+      lastFullWord = null // Clear saved word
+      console.log('[Content Script] Dismissed - cleared lastFullWord')
       container.remove()
     })
   }, 10)
@@ -214,6 +275,7 @@ let lastTypingTime = 0
 let backspaceCount = 0
 let companionEnabled = true
 let lastOfferTime = 0
+let lastFullWord: string | null = null // Save the word before backspacing
 
 let savedActiveElement: HTMLElement | null = null
 let currentTextField: HTMLElement | null = null
@@ -254,10 +316,20 @@ function startObservingTextField(element: HTMLElement) {
     const now = Date.now()
     
     if (e.key === 'Backspace') {
+      // Save the current word BEFORE it gets deleted by backspacing
+      if (backspaceCount === 0) {
+        const currentWordData = getCurrentWordFromElement(element)
+        if (currentWordData && currentWordData.word.length >= 3) {
+          lastFullWord = currentWordData.word
+          console.log('[Content Script] Saved word before backspacing:', lastFullWord)
+        }
+      }
+      
       backspaceCount++
       const timeSinceLastOffer = now - lastOfferTime
       
       if (backspaceCount >= BACKSPACE_THRESHOLD && companionEnabled && timeSinceLastOffer > SNOOZE_DURATION) {
+        console.log('[Content Script] Triggering spelling help')
         showStruggleHelp('spelling')
         lastOfferTime = now
         backspaceCount = 0
@@ -291,6 +363,15 @@ function showStruggleHelp(type: 'spelling' | 'wording') {
   const message = type === 'spelling' ? 'Need help with spelling?' : 'Need help wording this?'
   showCompanionNotification({ message, type })
   backspaceCount = 0
+
+  try {
+    chrome.runtime.sendMessage({
+      type: 'COMPANION_DETECTED_STRUGGLE',
+      payload: { type: type === 'spelling' ? 'typing' : 'reading', confidence: 'medium' }
+    })
+  } catch (e) {
+    console.warn('[Content Script] Failed to report struggle:', e)
+  }
 }
 
 // Message listener
