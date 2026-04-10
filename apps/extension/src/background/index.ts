@@ -19,10 +19,12 @@ let offscreenDocumentReady = false
 async function ensureOffscreenDocument(): Promise<void> {
   if (offscreenDocumentReady) return
 
+  const offscreenUrl = 'src/offscreen-html/index.html'
+
   try {
     const existingContexts = await chrome.runtime.getContexts({
       contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType],
-      documentUrls: [chrome.runtime.getURL('offscreen/index.html')]
+      documentUrls: [chrome.runtime.getURL(offscreenUrl)]
     })
     if (existingContexts.length > 0) {
       offscreenDocumentReady = true
@@ -34,13 +36,15 @@ async function ensureOffscreenDocument(): Promise<void> {
 
   try {
     await chrome.offscreen.createDocument({
-      url: 'offscreen/index.html',
+      url: offscreenUrl,
       reasons: [chrome.offscreen.Reason.USER_MEDIA],
       justification: 'Recording voice notes requires microphone access'
     })
     offscreenDocumentReady = true
-  } catch {
-    offscreenDocumentReady = true
+  } catch (error) {
+    offscreenDocumentReady = false
+    console.error('[Service Worker] Failed to create offscreen document:', error)
+    throw new Error('Failed to create offscreen document for recording')
   }
 }
 
