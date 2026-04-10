@@ -14,7 +14,7 @@
 
 Plans:
 - [ ] 01-01-PLAN.md — Fix note-taking backend (duration, monthly limit, auto-titles, dead types, GET_NOTE_AUDIO)
-- [ ] 01-02-PLAN.md — Fix companion (font loading, 200+ dictionary, Levenshtein, contentEditable, analytics)
+- [x] 01-02-PLAN.md — Fix companion (font loading, 200+ dictionary, Levenshtein, contentEditable, analytics)
 - [ ] 01-03-PLAN.md — Build note listing/playback UI in popup (depends on 01)
 
 ---
