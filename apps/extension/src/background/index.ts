@@ -41,13 +41,21 @@ async function handleStopRecording(): Promise<{ success: boolean; error?: string
 }
 
 async function handleSaveRecordedNote(
-  audioData: ArrayBuffer,
+  audioBase64: string,
   duration: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const audioBlob = new Blob([audioData], { type: 'audio/webm' })
+    // Convert base64 data URL to Blob for storage
+    const [meta, b64] = audioBase64.split(',')
+    const mimeMatch = meta.match(/:(.*?);/)
+    const mime = mimeMatch ? mimeMatch[1] : 'audio/webm'
+    const binary = atob(b64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const audioBlob = new Blob([bytes], { type: mime })
+
     const currentCount = await getNotesCount()
-    const title = `Voice Note #${currentCount} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    const title = `Voice Note #${currentCount + 1} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     await addNote({
       title,
       audioBlob,
@@ -135,13 +143,17 @@ async function handleSaveSitePreference(preference: any): Promise<{ success: boo
   return { success: true }
 }
 
-async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; audioData?: ArrayBuffer; error?: string }> {
+async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; audioBase64?: string; error?: string }> {
   try {
     const audioBlob = await getNoteAudio(noteId)
     if (!audioBlob) return { success: false, error: 'Note not found' }
-    // Convert Blob to ArrayBuffer — Blobs don't survive Chrome message passing
-    const audioData = await audioBlob.arrayBuffer()
-    return { success: true, audioData }
+    // Convert Blob to base64 data URL — strings are the only reliable Chrome message format
+    const arrayBuffer = await audioBlob.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    const audioBase64 = `data:${audioBlob.type || 'audio/webm'};base64,${btoa(binary)}`
+    return { success: true, audioBase64 }
   } catch (error) {
     console.error('[Service Worker] Get note audio failed:', error)
     return { success: false, error: 'Failed to get note audio' }
@@ -193,7 +205,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { isRecording: isCurrentlyRecording }
 
       case 'SAVE_RECORDED_NOTE':
-        return await handleSaveRecordedNote(message.audioData, message.duration)
+        return await handleSaveRecordedNote(message.audioBase64, message.duration)
 
       case 'RECORDING_STATE_UPDATE':
         isCurrentlyRecording = !!message.isRecording

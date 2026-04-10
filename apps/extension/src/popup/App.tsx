@@ -1,6 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Settings } from '../shared/types/storage'
 
+// Helper: convert Blob to base64 string (survives Chrome message passing)
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+// Helper: convert base64 data URL to Blob
+function base64ToBlob(dataUrl: string): Blob {
+  const [meta, b64] = dataUrl.split(',')
+  const mimeMatch = meta.match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'audio/webm'
+  const binary = atob(b64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
 const DEFAULT_SETTINGS: Settings = {
   id: 'global',
   fontEnabled: false,
@@ -162,13 +183,13 @@ export function App() {
         chunksRef.current = []
         mediaRecorderRef.current = null
 
-        // Convert to ArrayBuffer for Chrome message passing (Blobs don't serialize)
-        const audioData = await audioBlob.arrayBuffer()
+        // Convert to base64 for Chrome message passing (ArrayBuffer/Blob don't serialize reliably)
+        const audioBase64 = await blobToBase64(audioBlob)
         try {
           const response = await chrome.runtime.sendMessage({
             type: 'SAVE_RECORDED_NOTE',
-            audioData,
-            duration: Math.round(duration) / 1000
+            audioBase64,
+            duration: Math.round(duration * 10) / 10
           })
           if (response?.success) {
             await loadNotes()
@@ -222,11 +243,10 @@ export function App() {
     if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
 
     try {
-      // Request audio as ArrayBuffer (Blobs don't survive Chrome message passing)
+      // Request audio as base64 string (only strings reliably survive Chrome message passing)
       const response = await chrome.runtime.sendMessage({ type: 'GET_NOTE_AUDIO', noteId })
-      if (response.success && response.audioData) {
-        // Reconstruct Blob from ArrayBuffer
-        const blob = new Blob([response.audioData], { type: 'audio/webm' })
+      if (response.success && response.audioBase64) {
+        const blob = base64ToBlob(response.audioBase64)
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; setPlayingNoteId(null) }
