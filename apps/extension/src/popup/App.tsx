@@ -128,6 +128,12 @@ export function App() {
 
   const startRecording = async () => {
     try {
+      // Request microphone permission from popup (visible context)
+      // Offscreen documents can't show permission prompts — Chrome auto-dismisses them
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // Release immediately — we just needed the permission grant
+      stream.getTracks().forEach(track => track.stop())
+
       const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' })
       if (response.success) {
         setIsRecording(true)
@@ -135,7 +141,11 @@ export function App() {
         alert('Could not start recording: ' + (response.error || 'Unknown error'))
       }
     } catch (error: any) {
-      alert('Recording error: ' + (error.message || 'Unknown error'))
+      if (error.name === 'NotAllowedError') {
+        alert('Microphone permission is required for voice notes. Please allow microphone access and try again.')
+      } else {
+        alert('Recording error: ' + (error.message || 'Unknown error'))
+      }
     }
   }
 
