@@ -253,14 +253,40 @@ export function App() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
-          <div>
-            <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Voice Note</p>
-            <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Quick audio memo</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Voice Notes</p>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{noteCount}/50 this month</p>
+            </div>
+            <button onClick={isRecording ? stopRecording : startRecording} style={{ padding: '8px 16px', backgroundColor: isRecording ? '#EF4444' : '#10B981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
+              {isRecording ? '⏹ Stop' : '● Record'}
+            </button>
           </div>
-          <button onClick={isRecording ? stopRecording : startRecording} style={{ padding: '10px 16px', backgroundColor: isRecording ? '#EF4444' : '#10B981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
-            {isRecording ? 'Stop' : 'Record'}
-          </button>
-          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{noteCount}/50 notes this month</p>
+
+          {notes.length > 0 && (
+            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {notes.map(note => (
+                <div key={note.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#111827', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {note.title || 'Untitled'}
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#9CA3AF', margin: 0 }}>
+                      {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {Math.round(note.duration)}s
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
+                    <button onClick={() => playNote(note.id)} style={{ padding: '4px 8px', backgroundColor: playingNoteId === note.id ? '#EF4444' : '#3B82F6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                      {playingNoteId === note.id ? '⏹' : '▶'}
+                    </button>
+                    <button onClick={() => handleDeleteNote(note.id)} style={{ padding: '4px 8px', backgroundColor: '#FEE2E2', color: '#991B1B', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ paddingTop: '8px', borderTop: '1px solid #E5E7EB', textAlign: 'center' }}>
