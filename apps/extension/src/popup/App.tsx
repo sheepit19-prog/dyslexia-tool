@@ -25,6 +25,9 @@ export function App() {
   const [readingRulerEnabled, setReadingRulerEnabled] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [companionEnabled, setCompanionEnabled] = useState(settings.companionMode === 'proactive')
+  const [notes, setNotes] = useState<Array<{ id: string; title: string | null; duration: number; createdAt: string | Date }>>([])
+  const [playingNoteId, setPlayingNoteId] = useState<string | null>(null)
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     setCompanionEnabled(settings.companionMode === 'proactive')
@@ -49,10 +52,7 @@ export function App() {
         if (result.settings) {
           setSettings(result.settings)
         }
-        const response = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
-        if (response.success && response.notes) {
-          setNoteCount(response.notes.length)
-        }
+        await loadNotes()
       } catch (error) {
         console.error('[Popup] Failed to load data:', error)
         setError('Failed to load settings')
@@ -62,6 +62,18 @@ export function App() {
     }
     loadData()
   }, [])
+
+  const loadNotes = async () => {
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
+      if (response.success && response.notes) {
+        setNotes(response.notes)
+        setNoteCount(response.notes.length)
+      }
+    } catch (error) {
+      console.error('[Popup] Failed to load notes:', error)
+    }
+  }
 
   const toggleFont = async (enabled: boolean) => {
     const newSettings = { ...settings, fontEnabled: enabled }
@@ -132,8 +144,7 @@ export function App() {
       const response = await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' })
       setIsRecording(false)
       if (response.success) {
-        const notesResponse = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
-        if (notesResponse.success) setNoteCount(notesResponse.notes.length)
+        await loadNotes()
         alert('Note saved!')
       } else {
         alert('Failed to save note: ' + (response.error || 'Unknown error'))
@@ -141,6 +152,38 @@ export function App() {
     } catch (error: any) {
       setIsRecording(false)
       alert('Error saving note: ' + (error.message || 'Unknown error'))
+    }
+  }
+
+  const playNote = async (noteId: string) => {
+    if (playingNoteId === noteId) {
+      if (audioRef) { audioRef.pause(); URL.revokeObjectURL(audioRef.src) }
+      setPlayingNoteId(null)
+      setAudioRef(null)
+      return
+    }
+    if (audioRef) { audioRef.pause(); URL.revokeObjectURL(audioRef.src) }
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'GET_NOTE_AUDIO', noteId })
+      if (response.success && response.audioBlob) {
+        const url = URL.createObjectURL(response.audioBlob)
+        const audio = new Audio(url)
+        audio.onended = () => { URL.revokeObjectURL(url); setPlayingNoteId(null); setAudioRef(null) }
+        audio.play()
+        setPlayingNoteId(noteId)
+        setAudioRef(audio)
+      }
+    } catch (error) {
+      console.error('[Popup] Playback failed:', error)
+    }
+  }
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'DELETE_NOTE', noteId })
+      if (response.success) await loadNotes()
+    } catch (error) {
+      console.error('[Popup] Delete failed:', error)
     }
   }
 
