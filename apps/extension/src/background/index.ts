@@ -27,8 +27,7 @@ async function handleStartRecording(): Promise<{ success: boolean; error?: strin
       return { success: false, error: 'Monthly note limit reached (50 notes).' }
     }
 
-    // Open the recording tab (handles mic permission + recording + saving)
-    await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
+    isCurrentlyRecording = true
     return { success: true }
   } catch (error: any) {
     console.error('[Service Worker] Start recording failed:', error)
@@ -37,21 +36,8 @@ async function handleStartRecording(): Promise<{ success: boolean; error?: strin
 }
 
 async function handleStopRecording(): Promise<{ success: boolean; error?: string }> {
-  // Stop is handled by the recording tab now, not the background
-  // This is kept for popup compatibility — find the recording tab and send stop
-  try {
-    const tabs = await chrome.tabs.query({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
-    if (tabs.length > 0 && tabs[0].id) {
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'STOP_FROM_POPUP' })
-      isCurrentlyRecording = false
-      return { success: true }
-    }
-    isCurrentlyRecording = false
-    return { success: false, error: 'No active recording tab found' }
-  } catch (error: any) {
-    isCurrentlyRecording = false
-    return { success: false, error: error.message || 'Failed to stop recording' }
-  }
+  isCurrentlyRecording = false
+  return { success: true }
 }
 
 async function handleSaveRecordedNote(
@@ -149,11 +135,13 @@ async function handleSaveSitePreference(preference: any): Promise<{ success: boo
   return { success: true }
 }
 
-async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; audioBlob?: Blob; error?: string }> {
+async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; audioData?: ArrayBuffer; error?: string }> {
   try {
     const audioBlob = await getNoteAudio(noteId)
     if (!audioBlob) return { success: false, error: 'Note not found' }
-    return { success: true, audioBlob }
+    // Convert Blob to ArrayBuffer — Blobs don't survive Chrome message passing
+    const audioData = await audioBlob.arrayBuffer()
+    return { success: true, audioData }
   } catch (error) {
     console.error('[Service Worker] Get note audio failed:', error)
     return { success: false, error: 'Failed to get note audio' }

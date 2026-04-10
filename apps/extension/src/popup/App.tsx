@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Settings } from '../shared/types/storage'
 
 const DEFAULT_SETTINGS: Settings = {
@@ -27,7 +27,12 @@ export function App() {
   const [companionEnabled, setCompanionEnabled] = useState(settings.companionMode === 'proactive')
   const [notes, setNotes] = useState<Array<{ id: string; title: string | null; duration: number; createdAt: string | Date }>>([])
   const [playingNoteId, setPlayingNoteId] = useState<string | null>(null)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const startTimeRef = useRef<number>(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     setCompanionEnabled(settings.companionMode === 'proactive')
@@ -53,11 +58,6 @@ export function App() {
           setSettings(result.settings)
         }
         await loadNotes()
-        // Query background for current recording state (survives popup close/reopen)
-        const state = await chrome.runtime.sendMessage({ type: 'GET_RECORDING_STATE' })
-        if (state?.isRecording) {
-          setIsRecording(true)
-        }
       } catch (error) {
         console.error('[Popup] Failed to load data:', error)
         setError('Failed to load settings')
@@ -133,49 +133,108 @@ export function App() {
 
   const startRecording = async () => {
     try {
-      const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' })
-      if (!response.success) {
-        alert('Could not start recording: ' + (response.error || 'Unknown error'))
+      // Check monthly limit first
+      const countResp = await chrome.runtime.sendMessage({ type: 'GET_NOTES' })
+      if (countResp.success && countResp.notes?.length >= 50) {
+        alert('Monthly note limit reached (50 notes).')
+        return
       }
-      // Recording tab opens — popup will close. Background tracks state.
-      // When user reopens popup, GET_RECORDING_STATE shows correct state.
-    } catch (error: any) {
-      alert('Recording error: ' + (error.message || 'Unknown error'))
+
+      // Request mic directly from popup — popup is a visible context with user gesture
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      chunksRef.current = []
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+      startTimeRef.current = Date.now()
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data)
+      }
+
+      recorder.onstop = async () => {
+        // Stop timer
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+        setRecordingTime(0)
+        stream.getTracks().forEach(track => track.stop())
+
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const duration = (Date.now() - startTimeRef.current) / 1000
+        chunksRef.current = []
+        mediaRecorderRef.current = null
+
+        // Convert to ArrayBuffer for Chrome message passing (Blobs don't serialize)
+        const audioData = await audioBlob.arrayBuffer()
+        try {
+          const response = await chrome.runtime.sendMessage({
+            type: 'SAVE_RECORDED_NOTE',
+            audioData,
+            duration: Math.round(duration) / 1000
+          })
+          if (response?.success) {
+            await loadNotes()
+          } else {
+            alert('Failed to save note: ' + (response?.error || 'Unknown error'))
+          }
+        } catch (err: any) {
+          alert('Error saving note: ' + (err.message || 'Unknown error'))
+        }
+
+        setIsRecording(false)
+      }
+
+      recorder.start()
+      setIsRecording(true)
+
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(Math.floor((Date.now() - startTimeRef.current) / 1000))
+      }, 200)
+
+      // Tell background about recording state
+      chrome.runtime.sendMessage({ type: 'RECORDING_STATE_UPDATE', isRecording: true }).catch(() => {})
+
+    } catch (err: any) {
+      setIsRecording(false)
+      if (err.name === 'NotAllowedError') {
+        alert('Microphone permission is required. Please allow access and try again.')
+      } else {
+        alert('Recording error: ' + (err.message || 'Unknown error'))
+      }
     }
   }
 
-  const stopRecording = async () => {
-    try {
-      const response = await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' })
-      setIsRecording(false)
-      if (response.success) {
-        await loadNotes()
-      } else {
-        alert('Failed to save note: ' + (response.error || 'Unknown error'))
-      }
-    } catch (error: any) {
-      setIsRecording(false)
-      alert('Error saving note: ' + (error.message || 'Unknown error'))
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop()
+      chrome.runtime.sendMessage({ type: 'RECORDING_STATE_UPDATE', isRecording: false }).catch(() => {})
     }
   }
 
   const playNote = async (noteId: string) => {
+    // If clicking the currently playing note → stop
     if (playingNoteId === noteId) {
-      if (audioRef) { audioRef.pause(); URL.revokeObjectURL(audioRef.src) }
+      if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
+      audioRef.current = null
       setPlayingNoteId(null)
-      setAudioRef(null)
       return
     }
-    if (audioRef) { audioRef.pause(); URL.revokeObjectURL(audioRef.src) }
+    // Stop any existing playback
+    if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
+
     try {
+      // Request audio as ArrayBuffer (Blobs don't survive Chrome message passing)
       const response = await chrome.runtime.sendMessage({ type: 'GET_NOTE_AUDIO', noteId })
-      if (response.success && response.audioBlob) {
-        const url = URL.createObjectURL(response.audioBlob)
+      if (response.success && response.audioData) {
+        // Reconstruct Blob from ArrayBuffer
+        const blob = new Blob([response.audioData], { type: 'audio/webm' })
+        const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
-        audio.onended = () => { URL.revokeObjectURL(url); setPlayingNoteId(null); setAudioRef(null) }
+        audio.onended = () => { URL.revokeObjectURL(url); audioRef.current = null; setPlayingNoteId(null) }
+        audioRef.current = audio
         audio.play()
         setPlayingNoteId(noteId)
-        setAudioRef(audio)
+      } else {
+        console.error('[Popup] No audio data returned:', response.error)
       }
     } catch (error) {
       console.error('[Popup] Playback failed:', error)
@@ -260,12 +319,22 @@ export function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Voice Notes</p>
-              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{noteCount}/50 this month</p>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                {isRecording
+                  ? `Recording... ${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')}`
+                  : `${noteCount}/50 this month`}
+              </p>
             </div>
             <button onClick={isRecording ? stopRecording : startRecording} style={{ padding: '8px 16px', backgroundColor: isRecording ? '#EF4444' : '#10B981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
               {isRecording ? '⏹ Stop' : '● Record'}
             </button>
           </div>
+
+          {isRecording && (
+            <div style={{ height: '4px', backgroundColor: '#E5E7EB', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', backgroundColor: '#EF4444', width: '100%', animation: 'pulse-bar 1.5s ease-in-out infinite' }} />
+            </div>
+          )}
 
           {notes.length > 0 && (
             <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
