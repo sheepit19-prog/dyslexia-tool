@@ -29,6 +29,21 @@ export function App() {
   const [playingNoteId, setPlayingNoteId] = useState<string | null>(null)
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
 
+  // Listen for recording state changes from background
+  useEffect(() => {
+    const listener = (message: any) => {
+      if (message.type === 'RECORDING_STARTED') {
+        setIsRecording(true)
+      }
+      if (message.type === 'RECORDING_FAILED') {
+        setIsRecording(false)
+        alert('Could not start recording: ' + (message.error || 'Unknown error'))
+      }
+    }
+    chrome.runtime.onMessage.addListener(listener)
+    return () => chrome.runtime.onMessage.removeListener(listener)
+  }, [])
+
   useEffect(() => {
     setCompanionEnabled(settings.companionMode === 'proactive')
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
@@ -128,24 +143,12 @@ export function App() {
 
   const startRecording = async () => {
     try {
-      // Request microphone permission from popup (visible context)
-      // Offscreen documents can't show permission prompts — Chrome auto-dismisses them
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      // Release immediately — we just needed the permission grant
-      stream.getTracks().forEach(track => track.stop())
-
-      const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' })
-      if (response.success) {
-        setIsRecording(true)
-      } else {
-        alert('Could not start recording: ' + (response.error || 'Unknown error'))
-      }
+      // Open mic-permission page in a new tab (popup can't show getUserMedia prompts)
+      // Background listens for MIC_PERMISSION_RESULT and starts recording
+      const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
+      void tab // tab opens permission page — background handles the rest
     } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
-        alert('Microphone permission is required for voice notes. Please allow microphone access and try again.')
-      } else {
-        alert('Recording error: ' + (error.message || 'Unknown error'))
-      }
+      alert('Recording error: ' + (error.message || 'Unknown error'))
     }
   }
 

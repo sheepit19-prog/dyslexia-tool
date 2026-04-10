@@ -188,6 +188,33 @@ async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; a
   }
 }
 
+async function handleMicPermissionResult(
+  granted: boolean,
+  sender: chrome.runtime.MessageSender
+): Promise<{ success: boolean }> {
+  // Close the permission tab
+  if (sender.tab?.id) {
+    chrome.tabs.remove(sender.tab.id).catch(() => {})
+  }
+
+  if (!granted) {
+    console.warn('[Service Worker] Mic permission denied by user')
+    // Notify popup that recording failed
+    chrome.runtime.sendMessage({ type: 'RECORDING_FAILED', error: 'Microphone permission denied' }).catch(() => {})
+    return { success: false }
+  }
+
+  // Permission granted — start recording via offscreen
+  const result = await handleStartRecording()
+  // Notify popup of the outcome
+  if (result.success) {
+    chrome.runtime.sendMessage({ type: 'RECORDING_STARTED' }).catch(() => {})
+  } else {
+    chrome.runtime.sendMessage({ type: 'RECORDING_FAILED', error: result.error }).catch(() => {})
+  }
+  return result
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[Service Worker] Message received:', message.type)
 
@@ -234,6 +261,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       case 'SAVE_SITE_PREFERENCE':
         return await handleSaveSitePreference(message.preference)
+
+      case 'MIC_PERMISSION_RESULT':
+        return await handleMicPermissionResult(message.granted, sender)
 
       default:
         console.warn('[Service Worker] Unknown message type:', message.type)
