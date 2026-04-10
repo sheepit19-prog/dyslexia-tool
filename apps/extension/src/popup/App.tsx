@@ -133,20 +133,12 @@ export function App() {
 
   const startRecording = async () => {
     try {
-      // Try starting recording directly — Chrome may already have mic permission
       const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' })
-      if (response.success) {
-        setIsRecording(true)
-        return
+      if (!response.success) {
+        alert('Could not start recording: ' + (response.error || 'Unknown error'))
       }
-      // If permission-related error, open the permission tab to prompt the user
-      if (response.error && (response.error.includes('Permission') || response.error.includes('permission') || response.error.includes('dismissed'))) {
-        await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
-        // Popup will close when tab opens. Background tracks recording state.
-        // When user reopens popup, GET_RECORDING_STATE will show isRecording=true
-        return
-      }
-      alert('Could not start recording: ' + (response.error || 'Unknown error'))
+      // Recording tab opens — popup will close. Background tracks state.
+      // When user reopens popup, GET_RECORDING_STATE shows correct state.
     } catch (error: any) {
       alert('Recording error: ' + (error.message || 'Unknown error'))
     }
@@ -158,7 +150,6 @@ export function App() {
       setIsRecording(false)
       if (response.success) {
         await loadNotes()
-        alert('Note saved!')
       } else {
         alert('Failed to save note: ' + (response.error || 'Unknown error'))
       }

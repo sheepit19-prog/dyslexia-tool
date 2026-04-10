@@ -14,38 +14,67 @@ import type { MessageMap } from '../shared/types/messages'
 
 initializeStorage().catch(console.error)
 
-let offscreenDocumentReady = false
 let isCurrentlyRecording = false
 
-async function ensureOffscreenDocument(): Promise<void> {
-  if (offscreenDocumentReady) return
-
-  const offscreenUrl = 'src/offscreen-html/index.html'
-
-  try {
-    const existingContexts = await chrome.runtime.getContexts({
-      contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType],
-      documentUrls: [chrome.runtime.getURL(offscreenUrl)]
-    })
-    if (existingContexts.length > 0) {
-      offscreenDocumentReady = true
-      return
-    }
-  } catch {
-    // getContexts may not be available in older Chrome
+async function handleStartRecording(): Promise<{ success: boolean; error?: string }> {
+  if (isCurrentlyRecording) {
+    return { success: false, error: 'Already recording' }
   }
 
   try {
-    await chrome.offscreen.createDocument({
-      url: offscreenUrl,
-      reasons: [chrome.offscreen.Reason.USER_MEDIA],
-      justification: 'Recording voice notes requires microphone access'
+    const count = await getNotesCount()
+    if (count >= 50) {
+      return { success: false, error: 'Monthly note limit reached (50 notes).' }
+    }
+
+    // Open the recording tab (handles mic permission + recording + saving)
+    await chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Service Worker] Start recording failed:', error)
+    return { success: false, error: error.message || 'Failed to start recording' }
+  }
+}
+
+async function handleStopRecording(): Promise<{ success: boolean; error?: string }> {
+  // Stop is handled by the recording tab now, not the background
+  // This is kept for popup compatibility — find the recording tab and send stop
+  try {
+    const tabs = await chrome.tabs.query({ url: chrome.runtime.getURL('src/mic-permission/index.html') })
+    if (tabs.length > 0 && tabs[0].id) {
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'STOP_FROM_POPUP' })
+      isCurrentlyRecording = false
+      return { success: true }
+    }
+    isCurrentlyRecording = false
+    return { success: false, error: 'No active recording tab found' }
+  } catch (error: any) {
+    isCurrentlyRecording = false
+    return { success: false, error: error.message || 'Failed to stop recording' }
+  }
+}
+
+async function handleSaveRecordedNote(
+  audioData: ArrayBuffer,
+  duration: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const audioBlob = new Blob([audioData], { type: 'audio/webm' })
+    const currentCount = await getNotesCount()
+    const title = `Voice Note #${currentCount} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    await addNote({
+      title,
+      audioBlob,
+      duration,
+      transcript: null,
+      tags: []
     })
-    offscreenDocumentReady = true
-  } catch (error) {
-    offscreenDocumentReady = false
-    console.error('[Service Worker] Failed to create offscreen document:', error)
-    throw new Error('Failed to create offscreen document for recording')
+    isCurrentlyRecording = false
+    await trackFeatureUsage('note_saved')
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Service Worker] Save recorded note failed:', error)
+    return { success: false, error: error.message || 'Failed to save note' }
   }
 }
 
@@ -67,72 +96,6 @@ async function handleFontMessage(
   } catch (error) {
     console.error('[Service Worker] Font application failed:', error)
     return { success: false }
-  }
-}
-
-async function handleStartRecording(): Promise<{ success: boolean; error?: string }> {
-  if (isCurrentlyRecording) {
-    return { success: false, error: 'Already recording' }
-  }
-
-  try {
-    const count = await getNotesCount()
-    if (count >= 50) {
-      return { success: false, error: 'Monthly note limit reached (50 notes).' }
-    }
-
-    await ensureOffscreenDocument()
-
-    const response: any = await chrome.runtime.sendMessage({
-      type: 'START_RECORDING',
-      target: 'offscreen'
-    })
-
-    if (!response?.success) {
-      return { success: false, error: response?.error || 'Failed to start recording' }
-    }
-
-    isCurrentlyRecording = true
-    await trackFeatureUsage('note_capture_start')
-    return { success: true }
-  } catch (error: any) {
-    console.error('[Service Worker] Start recording failed:', error)
-    return { success: false, error: error.message || 'Failed to start recording' }
-  }
-}
-
-async function handleStopRecording(): Promise<{ success: boolean; error?: string }> {
-  try {
-    await ensureOffscreenDocument()
-
-    const response: any = await chrome.runtime.sendMessage({
-      type: 'STOP_RECORDING',
-      target: 'offscreen'
-    })
-
-    if (!response?.success) {
-      isCurrentlyRecording = false
-      return { success: false, error: response?.error || 'Failed to stop recording' }
-    }
-
-    const audioBlob = new Blob([response.audioData], { type: 'audio/webm' })
-    const currentCount = await getNotesCount()
-    const title = `Voice Note #${currentCount} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-    await addNote({
-      title,
-      audioBlob,
-      duration: response.duration,
-      transcript: null,
-      tags: []
-    })
-
-    isCurrentlyRecording = false
-    await trackFeatureUsage('note_saved')
-    return { success: true }
-  } catch (error: any) {
-    isCurrentlyRecording = false
-    console.error('[Service Worker] Stop recording failed:', error)
-    return { success: false, error: error.message || 'Failed to save note' }
   }
 }
 
@@ -197,24 +160,6 @@ async function handleGetNoteAudio(noteId: string): Promise<{ success: boolean; a
   }
 }
 
-async function handleMicPermissionResult(
-  granted: boolean,
-  sender: chrome.runtime.MessageSender
-): Promise<{ success: boolean }> {
-  // Close the permission tab
-  if (sender.tab?.id) {
-    chrome.tabs.remove(sender.tab.id).catch(() => {})
-  }
-
-  if (!granted) {
-    console.warn('[Service Worker] Mic permission denied by user')
-    return { success: false }
-  }
-
-  // Permission granted — start recording via offscreen
-  return await handleStartRecording()
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[Service Worker] Message received:', message.type)
 
@@ -256,17 +201,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'DELETE_NOTE':
         return await handleDeleteNote(message.noteId)
 
+      case 'GET_RECORDING_STATE':
+        return { isRecording: isCurrentlyRecording }
+
+      case 'SAVE_RECORDED_NOTE':
+        return await handleSaveRecordedNote(message.audioData, message.duration)
+
+      case 'RECORDING_STATE_UPDATE':
+        isCurrentlyRecording = !!message.isRecording
+        return { success: true }
+
       case 'GET_SITE_PREFERENCE':
         return await handleGetSitePreference(message.domain)
 
       case 'SAVE_SITE_PREFERENCE':
         return await handleSaveSitePreference(message.preference)
-
-      case 'MIC_PERMISSION_RESULT':
-        return await handleMicPermissionResult(message.granted, sender)
-
-      case 'GET_RECORDING_STATE':
-        return { isRecording: isCurrentlyRecording }
 
       default:
         console.warn('[Service Worker] Unknown message type:', message.type)
