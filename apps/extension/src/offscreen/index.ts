@@ -1,11 +1,13 @@
 let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
+let recordingStartTime = 0
 
 async function startRecording(): Promise<void> {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
   audioChunks = []
   mediaRecorder = new MediaRecorder(stream)
+  recordingStartTime = Date.now()
 
   mediaRecorder.ondataavailable = (event) => {
     if (event.data.size > 0) audioChunks.push(event.data)
@@ -30,7 +32,7 @@ async function stopRecording(): Promise<{ audioData: ArrayBuffer; duration: numb
       const audioData = await audioBlob.arrayBuffer()
       audioChunks = []
       mediaRecorder = null
-      resolve({ audioData, duration: audioBlob.size / 1000 })
+      resolve({ audioData, duration: Math.round((Date.now() - recordingStartTime)) / 1000 })
     }
 
     mediaRecorder!.stop()

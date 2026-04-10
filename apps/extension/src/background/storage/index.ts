@@ -103,7 +103,15 @@ export async function deleteNote(noteId: string): Promise<void> {
 
 export async function getNotesCount(): Promise<number> {
   const db = getDB()
-  return await db.notes.count()
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  return await db.notes.where('createdAt').aboveOrEqual(startOfMonth).count()
+}
+
+export async function getNoteAudio(noteId: string): Promise<Blob | null> {
+  const db = getDB()
+  const note = await db.notes.get(noteId)
+  return note?.audioBlob ?? null
 }
 
 // Site preferences operations

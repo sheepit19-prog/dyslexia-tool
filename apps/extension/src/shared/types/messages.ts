@@ -25,14 +25,9 @@ export interface MessageMap {
   }
   
   // Note operations
-  'NOTE_CAPTURE_START': {
-    payload: { duration?: number }
-    response: { success: boolean; noteId?: string; error?: string }
-  }
-  
-  'NOTE_STOP_CAPTURE': {
+  'GET_NOTE_AUDIO': {
     payload: { noteId: string }
-    response: { success: boolean }
+    response: { success: boolean; audioBlob?: Blob; error?: string }
   }
   
   // Companion operations
@@ -66,12 +61,6 @@ export interface MessageMap {
   'READING_RULER_TOGGLE': {
     payload: { enabled: boolean }
     response: { success: boolean }
-  }
-  
-  // Note operations
-  'NOTE_SAVE': {
-    payload: { audioBlob: Blob; duration: number }
-    response: { success: boolean; error?: string }
   }
   
   'GET_NOTES': {
