@@ -20,13 +20,13 @@ export const CompanionSettings: React.FC = () => {
 
   return (
     <div>
-      <h2 className="mb-2 text-xl font-semibold text-gray-900">Companion Settings</h2>
-      <p className="mb-6 text-sm text-gray-500">
+      <h2 className="mb-2 text-2xl font-bold text-gray-900">Companion Settings</h2>
+      <p className="mb-8 text-lg text-gray-500">
         Configure how the reading companion interacts with you while browsing.
       </p>
 
       <div className="divide-y divide-gray-100">
-        <div className="p-4">
+        <div className="py-5">
           <Select
             value={settings.companionMode}
             onChange={(val) => update('companionMode', val as Settings['companionMode'])}
@@ -36,7 +36,7 @@ export const CompanionSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Slider
             value={settings.companionSensitivity}
             onChange={(val) => update('companionSensitivity', val)}
@@ -49,7 +49,7 @@ export const CompanionSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Toggle
             checked={settings.analyticsEnabled}
             onChange={(val) => update('analyticsEnabled', val)}

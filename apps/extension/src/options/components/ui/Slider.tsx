@@ -26,15 +26,15 @@ export const Slider: React.FC<SliderProps> = ({
   displayValue
 }) => {
   return (
-    <div className="py-3">
+    <div className="py-4">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium text-gray-900">{label}</label>
-        <span className="text-sm tabular-nums text-gray-600">
+        <label className="text-lg font-semibold text-gray-900">{label}</label>
+        <span className="text-lg tabular-nums font-medium text-gray-600">
           {displayValue ?? value}
         </span>
       </div>
       {description && (
-        <div className="mt-0.5 text-sm text-gray-500">{description}</div>
+        <div className="mt-1 text-base text-gray-500">{description}</div>
       )}
       <input
         type="range"
@@ -44,7 +44,7 @@ export const Slider: React.FC<SliderProps> = ({
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         aria-label={label}
-        className="mt-2 w-full cursor-pointer accent-blue-500"
+        className="mt-3 w-full cursor-pointer accent-blue-500"
       />
     </div>
   )

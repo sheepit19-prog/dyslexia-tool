@@ -19,7 +19,7 @@ const SaveIndicator: React.FC = () => {
 
   return (
     <div
-      className={`fixed right-6 top-6 rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm transition-all duration-300 ${
+      className={`fixed right-8 top-8 rounded-xl px-5 py-2.5 text-lg font-medium shadow-sm transition-all duration-300 ${
         saveStatus === 'saving'
           ? 'bg-blue-50 text-blue-600'
           : saveStatus === 'saved'
@@ -66,7 +66,7 @@ export const App: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar activeSection={activeSection} onSelect={setActiveSection} />
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-8 py-8">
+        <div className="mx-auto max-w-3xl px-10 py-10">
           <SaveIndicator />
           {SECTIONS.map((section) => (
             <div

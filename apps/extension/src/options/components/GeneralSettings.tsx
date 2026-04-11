@@ -26,13 +26,13 @@ export const GeneralSettings: React.FC = () => {
 
   return (
     <div>
-      <h2 className="mb-2 text-xl font-semibold text-gray-900">General Settings</h2>
-      <p className="mb-6 text-sm text-gray-500">
+      <h2 className="mb-2 text-2xl font-bold text-gray-900">General Settings</h2>
+      <p className="mb-8 text-lg text-gray-500">
         Configure how text appears on web pages and the extension appearance.
       </p>
 
       <div className="divide-y divide-gray-100">
-        <div className="p-4">
+        <div className="py-5">
           <Toggle
             checked={settings.fontEnabled}
             onChange={(val) => update('fontEnabled', val)}
@@ -41,7 +41,7 @@ export const GeneralSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Select
             value={settings.fontFamily}
             onChange={(val) => update('fontFamily', val as Settings['fontFamily'])}
@@ -51,7 +51,7 @@ export const GeneralSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Slider
             value={settings.lineSpacing}
             onChange={(val) => update('lineSpacing', val)}
@@ -64,7 +64,7 @@ export const GeneralSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Slider
             value={settings.letterSpacing}
             onChange={(val) => update('letterSpacing', val)}
@@ -77,7 +77,7 @@ export const GeneralSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <Select
             value={settings.theme}
             onChange={(val) => update('theme', val as Settings['theme'])}
@@ -87,12 +87,12 @@ export const GeneralSettings: React.FC = () => {
           />
         </div>
 
-        <div className="p-4">
+        <div className="py-5">
           <div className="flex items-baseline justify-between">
-            <label className="text-sm font-medium text-gray-900">Accent Color</label>
-            <span className="text-sm text-gray-600">{settings.accentColor}</span>
+            <label className="text-lg font-semibold text-gray-900">Accent Color</label>
+            <span className="text-lg text-gray-600">{settings.accentColor}</span>
           </div>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="mt-1 text-base text-gray-500">
             Choose the primary accent color used for buttons and highlights
           </p>
           <input
@@ -100,7 +100,7 @@ export const GeneralSettings: React.FC = () => {
             value={settings.accentColor}
             onChange={(e) => update('accentColor', e.target.value)}
             aria-label="Accent Color"
-            className="mt-2 h-10 w-16 cursor-pointer rounded-lg border border-gray-300 p-1"
+            className="mt-3 h-12 w-20 cursor-pointer rounded-lg border border-gray-300 p-1"
           />
         </div>
       </div>

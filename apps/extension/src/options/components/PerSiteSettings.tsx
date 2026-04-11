@@ -111,9 +111,8 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      {/* Card header */}
       <div
-        className="flex cursor-pointer items-center justify-between px-4 py-3"
+        className="flex cursor-pointer items-center justify-between px-6 py-4"
         onClick={() => setExpanded(!expanded)}
         role="button"
         tabIndex={0}
@@ -121,39 +120,37 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
         aria-expanded={expanded}
       >
         <div className="flex-1">
-          <h3 className="font-medium text-gray-900">{preference.id}</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{preference.id}</h3>
           {overrides.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-2">
               {overrides.map((o) => (
-                <span key={o.key} className="inline-block rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
+                <span key={o.key} className="inline-block rounded-full bg-blue-50 px-3 py-1 text-base text-blue-700">
                   {o.label}: {o.value}
                 </span>
               ))}
             </div>
           )}
           {overrides.length === 0 && (
-            <p className="mt-1 text-xs text-gray-400">No overrides set</p>
+            <p className="mt-1 text-base text-gray-400">No overrides set</p>
           )}
         </div>
         <svg
-          className={`h-5 w-5 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`h-6 w-6 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
 
-      {/* Expanded edit form */}
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-4 space-y-4">
-          {/* Font Enabled */}
+        <div className="border-t border-gray-100 px-6 py-5 space-y-5">
           <div className="flex items-center justify-between">
-            <label className="text-sm text-gray-700">Font Enabled</label>
-            <div className="flex items-center gap-2">
+            <label className="text-lg text-gray-700">Font Enabled</label>
+            <div className="flex items-center gap-3">
               {preference.fontEnabled !== null && (
                 <button
                   onClick={() => handleResetField('fontEnabled')}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-base text-gray-400 hover:text-red-500"
                   disabled={saving}
                 >
                   Reset
@@ -167,14 +164,13 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
             </div>
           </div>
 
-          {/* Font Family */}
           <div className="flex items-center justify-between">
-            <label className="text-sm text-gray-700">Font Family</label>
-            <div className="flex items-center gap-2">
+            <label className="text-lg text-gray-700">Font Family</label>
+            <div className="flex items-center gap-3">
               {preference.fontFamily !== null && (
                 <button
                   onClick={() => handleResetField('fontFamily')}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-base text-gray-400 hover:text-red-500"
                   disabled={saving}
                 >
                   Reset
@@ -189,14 +185,13 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
             </div>
           </div>
 
-          {/* Line Spacing */}
           <div className="flex items-center justify-between">
-            <label className="text-sm text-gray-700">Line Spacing</label>
-            <div className="flex items-center gap-2">
+            <label className="text-lg text-gray-700">Line Spacing</label>
+            <div className="flex items-center gap-3">
               {preference.lineSpacing !== null && (
                 <button
                   onClick={() => handleResetField('lineSpacing')}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-base text-gray-400 hover:text-red-500"
                   disabled={saving}
                 >
                   Reset
@@ -213,14 +208,13 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
             </div>
           </div>
 
-          {/* Letter Spacing */}
           <div className="flex items-center justify-between">
-            <label className="text-sm text-gray-700">Letter Spacing</label>
-            <div className="flex items-center gap-2">
+            <label className="text-lg text-gray-700">Letter Spacing</label>
+            <div className="flex items-center gap-3">
               {preference.letterSpacing !== null && (
                 <button
                   onClick={() => handleResetField('letterSpacing')}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-base text-gray-400 hover:text-red-500"
                   disabled={saving}
                 >
                   Reset
@@ -237,14 +231,13 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
             </div>
           </div>
 
-          {/* Theme */}
           <div className="flex items-center justify-between">
-            <label className="text-sm text-gray-700">Theme</label>
-            <div className="flex items-center gap-2">
+            <label className="text-lg text-gray-700">Theme</label>
+            <div className="flex items-center gap-3">
               {preference.theme !== null && (
                 <button
                   onClick={() => handleResetField('theme')}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-base text-gray-400 hover:text-red-500"
                   disabled={saving}
                 >
                   Reset
@@ -259,34 +252,33 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-3">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-md bg-blue-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
+              className="rounded-lg bg-blue-500 px-5 py-2.5 text-lg font-medium text-white hover:bg-blue-600 disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="text-sm text-red-500 hover:text-red-700"
+                className="text-lg text-red-500 hover:text-red-700"
               >
                 Remove all overrides for this site
               </button>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Remove?</span>
+              <div className="flex items-center gap-3">
+                <span className="text-base text-gray-500">Remove?</span>
                 <button
                   onClick={handleDelete}
-                  className="rounded bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
+                  className="rounded-lg bg-red-500 px-4 py-2 text-base text-white hover:bg-red-600"
                 >
                   Yes, remove
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300"
+                  className="rounded-lg bg-gray-200 px-4 py-2 text-base text-gray-700 hover:bg-gray-300"
                 >
                   Cancel
                 </button>
@@ -319,11 +311,11 @@ export const PerSiteSettings: React.FC = () => {
   if (loading) {
     return (
       <div>
-        <div className="mb-6">
-          <h2 className="mb-2 text-xl font-semibold text-gray-900">Per-Site Preferences</h2>
-          <p className="text-sm text-gray-500">Manage site-specific visual setting overrides.</p>
+        <div className="mb-8">
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">Per-Site Preferences</h2>
+          <p className="text-lg text-gray-500">Manage site-specific visual setting overrides.</p>
         </div>
-        <div className="text-sm text-gray-500">Loading site preferences...</div>
+        <div className="text-lg text-gray-500">Loading site preferences...</div>
       </div>
     )
   }
@@ -331,13 +323,13 @@ export const PerSiteSettings: React.FC = () => {
   if (preferences.length === 0) {
     return (
       <div>
-        <div className="mb-6">
-          <h2 className="mb-2 text-xl font-semibold text-gray-900">Per-Site Preferences</h2>
-          <p className="text-sm text-gray-500">Manage site-specific visual setting overrides.</p>
+        <div className="mb-8">
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">Per-Site Preferences</h2>
+          <p className="text-lg text-gray-500">Manage site-specific visual setting overrides.</p>
         </div>
-        <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-          <p className="text-gray-500">No site-specific preferences.</p>
-          <p className="mt-1 text-sm text-gray-400">
+        <div className="rounded-lg border border-dashed border-gray-300 p-10 text-center">
+          <p className="text-lg text-gray-500">No site-specific preferences.</p>
+          <p className="mt-2 text-base text-gray-400">
             You can add per-site overrides from the extension popup.
           </p>
         </div>
@@ -347,11 +339,11 @@ export const PerSiteSettings: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="mb-2 text-xl font-semibold text-gray-900">Per-Site Preferences</h2>
-        <p className="text-sm text-gray-500">Manage site-specific visual setting overrides.</p>
+      <div className="mb-8">
+        <h2 className="mb-2 text-2xl font-bold text-gray-900">Per-Site Preferences</h2>
+        <p className="text-lg text-gray-500">Manage site-specific visual setting overrides.</p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {preferences.map((pref) => (
           <SiteCard key={pref.id} preference={pref} onUpdate={refresh} />
         ))}
