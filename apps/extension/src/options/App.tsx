@@ -4,6 +4,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
+import { GeneralSettings } from './components/GeneralSettings'
+import { CompanionSettings } from './components/CompanionSettings'
+import { NotesSettings } from './components/NotesSettings'
+import { HotkeysSettings } from './components/HotkeysSettings'
+import { PerSiteSettings } from './components/PerSiteSettings'
+import { PrivacySettings } from './components/PrivacySettings'
 import { useSettingsStore, useSaveStatus } from './hooks/useSettings'
 
 const SaveIndicator: React.FC = () => {
@@ -69,12 +75,19 @@ export const App: React.FC = () => {
               role="tabpanel"
               className={activeSection === section.id ? 'block' : 'hidden'}
             >
-              <h2 className="mb-6 text-xl font-semibold text-gray-900">
-                {section.label}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {section.label} settings will appear here.
-              </p>
+              {section.id === 'general' && <GeneralSettings />}
+              {section.id === 'companion' && <CompanionSettings />}
+              {section.id === 'notes' && <NotesSettings />}
+              {!['general', 'companion', 'notes'].includes(section.id) && (
+                <>
+                  <h2 className="mb-6 text-xl font-semibold text-gray-900">
+                    {section.label}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {section.label} settings will appear here.
+                  </p>
+                </>
+              )}
             </div>
           ))}
         </div>
