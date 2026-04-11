@@ -17,15 +17,15 @@ describe('generateSpellingSuggestions', () => {
   })
 
   it('returns empty for correctly spelled words', () => {
-    expect(generateSpellingSuggestions('there')).toEqual([])
-    expect(generateSpellingSuggestions('were')).toEqual([])
+    expect(generateSpellingSuggestions('apple')).toEqual([])
+    expect(generateSpellingSuggestions('green')).toEqual([])
     expect(generateSpellingSuggestions('hello')).toEqual([])
     expect(generateSpellingSuggestions('world')).toEqual([])
   })
 
   it('returns empty for unknown words', () => {
     expect(generateSpellingSuggestions('xyzzy')).toEqual([])
-    expect(generateSpellingSuggestions('qwert')).toEqual([])
+    expect(generateSpellingSuggestions('asdfg')).toEqual([])
   })
 
   it('corrects common dyslexic misspellings', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   getCurrentWordFromElement,
   replaceWordInElement,
@@ -63,9 +63,18 @@ describe('getCurrentWordFromElement', () => {
     div.textContent = 'editable text'
     document.body.appendChild(div)
     div.focus()
+    const mockSelection = {
+      rangeCount: 1,
+      getRangeAt: () => ({
+        startContainer: div.firstChild,
+        startOffset: 13,
+      }),
+    }
+    vi.stubGlobal('getSelection', () => mockSelection)
     const result = getCurrentWordFromElement(div)
     expect(result).not.toBeNull()
     expect(result!.word).toBe('text')
+    vi.restoreAllMocks()
   })
 })
 
