@@ -137,6 +137,34 @@ export async function saveSitePreference(preference: Partial<SitePreference> & {
   })
 }
 
+// Site preferences helpers
+export async function getAllSitePreferences(): Promise<SitePreference[]> {
+  const db = getDB()
+  return await db.sitePreferences.toArray()
+}
+
+export async function deleteSitePreference(domain: string): Promise<void> {
+  const db = getDB()
+  await db.sitePreferences.delete(domain)
+  console.log('[Storage] Site preference deleted:', domain)
+}
+
+export async function deleteAllSitePreferences(): Promise<void> {
+  const db = getDB()
+  await db.sitePreferences.clear()
+  console.log('[Storage] All site preferences deleted')
+}
+
+export async function getStorageStats(): Promise<{ notes: number; sitePreferences: number; analytics: number }> {
+  const db = getDB()
+  const [notes, sitePreferences, analytics] = await Promise.all([
+    db.notes.count(),
+    db.sitePreferences.count(),
+    db.analytics.count()
+  ])
+  return { notes, sitePreferences, analytics }
+}
+
 // Analytics operations
 export async function trackFeatureUsage(featureName: string): Promise<void> {
   const db = getDB()

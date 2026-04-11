@@ -78,16 +78,9 @@ export const App: React.FC = () => {
               {section.id === 'general' && <GeneralSettings />}
               {section.id === 'companion' && <CompanionSettings />}
               {section.id === 'notes' && <NotesSettings />}
-              {!['general', 'companion', 'notes'].includes(section.id) && (
-                <>
-                  <h2 className="mb-6 text-xl font-semibold text-gray-900">
-                    {section.label}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {section.label} settings will appear here.
-                  </p>
-                </>
-              )}
+              {section.id === 'hotkeys' && <HotkeysSettings />}
+              {section.id === 'per-site' && <PerSiteSettings />}
+              {section.id === 'privacy' && <PrivacySettings />}
             </div>
           ))}
         </div>
