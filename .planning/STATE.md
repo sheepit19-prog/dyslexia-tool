@@ -2,27 +2,27 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production-Ready MVP
-current_plan: 02-02
+current_plan: 3
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-11T12:01:10.782Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-04-11T13:54:44.760Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # State: Dyslexia Tool MVP Fix-Up
 
 ## Current Status
 - **Phase:** 02-options-settings
-- **Current Plan:** 02-02
+- **Current Plan:** 3
 - **Total Plans in Phase:** 4
 - **Plans Completed:** 1 (02-01)
 - **Milestone:** v1.1
-- **Last session:** 2026-04-11T12:01:10.781Z
-- **Stopped at:** Completed 02-01-PLAN.md
+- **Last session:** 2026-04-11T13:54:44.758Z
+- **Stopped at:** Completed 02-02-PLAN.md
 
 ## Decisions
 - [2026-04-10] Focus on fixing all 20 triaged issues before Chrome Web Store launch
@@ -37,6 +37,8 @@ progress:
 - [Phase 01-critical-fixes/04]: Used vi.stubGlobal for jsdom getSelection mocking — jsdom lacks Selection API entirely
 - [Phase 02-01]: Used Zustand create() for settings store — simpler than React context for cross-component state
 - [Phase 02-01]: Removed companionEnabled from SitePreference, added theme/fontFamily — aligns type with CONTEXT.md visual-only override decision
+- [Phase 02-02]: Used getNotesCount() from storage instead of raw Dexie query — Reusable function already existed with exact needed logic
+- [Phase 02-02]: Added visual progress bar for monthly note usage in NotesSettings — Provides at-a-glance usage awareness beyond plain text count
 
 ## Blockers
 - None currently
