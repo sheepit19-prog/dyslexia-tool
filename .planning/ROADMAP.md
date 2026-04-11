@@ -25,14 +25,13 @@ Plans:
 
 **Dependencies:** Phase 1 (storage changes may affect settings schema)
 
-#### Plan 2.1: Build Options/Settings Page
-- Replace placeholder with full settings UI
-- General settings: default font, spacing values, theme, hotkeys
-- Companion settings: sensitivity slider, snooze duration, struggle types toggle
-- Privacy settings: data retention, export/delete all data
-- Notes settings: storage usage, export all notes, delete all notes
-- Per-site preferences management (view/edit/remove)
-- Keyboard shortcuts reference and customization
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Foundation: types, store, sidebar layout, UI primitives
+- [ ] 02-02-PLAN.md — General + Companion + Notes settings panels
+- [ ] 02-03-PLAN.md — Hotkeys + Per-Site + Privacy settings panels
+- [ ] 02-04-PLAN.md — Human verification checkpoint
 
 ---
 
@@ -63,5 +62,5 @@ Plans:
 | Phase | Status | Plans | Summaries |
 |-------|--------|-------|-----------|
 | 1     | planned | 3     | 0         |
-| 2     | planned | 1     | 0         |
+| 2     | planned | 4     | 0         |
 | 3     | planned | 2     | 0         |
