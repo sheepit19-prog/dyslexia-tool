@@ -32,9 +32,10 @@ export interface Note {
 export interface SitePreference {
   id: string // domain name
   fontEnabled: boolean | null // null = use global
+  fontFamily: Settings['fontFamily'] | null
   lineSpacing: number | null
   letterSpacing: number | null
-  companionEnabled: boolean | null
+  theme: 'light' | 'dark' | 'system' | null
   createdAt: Date
   updatedAt: Date
 }

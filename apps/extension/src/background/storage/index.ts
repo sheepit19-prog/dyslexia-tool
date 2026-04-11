@@ -128,9 +128,10 @@ export async function saveSitePreference(preference: Partial<SitePreference> & {
   await db.sitePreferences.put({
     id: preference.id,
     fontEnabled: preference.fontEnabled ?? null,
+    fontFamily: preference.fontFamily ?? null,
     lineSpacing: preference.lineSpacing ?? null,
     letterSpacing: preference.letterSpacing ?? null,
-    companionEnabled: preference.companionEnabled ?? null,
+    theme: preference.theme ?? null,
     createdAt: existing?.createdAt || new Date(),
     updatedAt: new Date()
   })
