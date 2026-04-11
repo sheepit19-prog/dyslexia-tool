@@ -2,27 +2,27 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production-Ready MVP
-current_plan: 3
+current_plan: 4
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-04-11T13:54:44.760Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-04-11T14:03:14.907Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # State: Dyslexia Tool MVP Fix-Up
 
 ## Current Status
 - **Phase:** 02-options-settings
-- **Current Plan:** 3
+- **Current Plan:** 4
 - **Total Plans in Phase:** 4
 - **Plans Completed:** 1 (02-01)
 - **Milestone:** v1.1
-- **Last session:** 2026-04-11T13:54:44.758Z
-- **Stopped at:** Completed 02-02-PLAN.md
+- **Last session:** 2026-04-11T14:03:14.905Z
+- **Stopped at:** Completed 02-03-PLAN.md
 
 ## Decisions
 - [2026-04-10] Focus on fixing all 20 triaged issues before Chrome Web Store launch
@@ -39,6 +39,8 @@ progress:
 - [Phase 02-01]: Removed companionEnabled from SitePreference, added theme/fontFamily — aligns type with CONTEXT.md visual-only override decision
 - [Phase 02-02]: Used getNotesCount() from storage instead of raw Dexie query — Reusable function already existed with exact needed logic
 - [Phase 02-02]: Added visual progress bar for monthly note usage in NotesSettings — Provides at-a-glance usage awareness beyond plain text count
+- [Phase 02-03]: Hotkeys panel is read-only with chrome.commands.getAll() - delegates rebinding to Chrome native — Chrome extensions cannot modify shortcuts programmatically
+- [Phase 02-03]: Per-site cards use local useState per card for edit state — Only one card edited at a time, avoids global state complexity
 
 ## Blockers
 - None currently
