@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production-Ready MVP
-current_plan: Not started
-status: unknown
-stopped_at: Phase 03 context gathered
-last_updated: "2026-04-11T15:57:04.328Z"
+current_plan: 03-02
+status: in-progress
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-04-12T09:34:39Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 9
 ---
 
 # State: Dyslexia Tool MVP Fix-Up
 
 ## Current Status
-- **Phase:** 02-options-settings (COMPLETE)
-- **Current Plan:** Not started
-- **Plans Completed:** 4 (02-01, 02-02, 02-03, 02-04)
+- **Phase:** 03-debt-polish (IN PROGRESS)
+- **Current Plan:** 03-02
+- **Plans Completed:** 1 (03-01)
 - **Milestone:** v1.1
-- **Last session:** 2026-04-11T15:57:04.324Z
-- **Stopped at:** Phase 03 context gathered
+- **Last session:** 2026-04-12T09:34:39Z
+- **Stopped at:** Completed 03-01-PLAN.md
 
 ## Decisions
 - [2026-04-10] Focus on fixing all 20 triaged issues before Chrome Web Store launch
@@ -42,6 +42,8 @@ progress:
 - [Phase 02-03]: Per-site cards use local useState per card for edit state — Only one card edited at a time, avoids global state complexity
 - [Phase 02-04]: Installed @tailwindcss/vite and added CSS import — Tailwind was never processing styles, all classes were inert
 - [Phase 02-04]: Set 20px base font size — text-sm (14px) was too small for dyslexic users
+- [Phase 03-01]: ES module singleton for companion state — all modules import same mutable object reference
+- [Phase 03-01]: Removed (window as any).setCompanionEnabled debug line — not needed for production
 
 ## Blockers
 - None currently
@@ -50,5 +52,6 @@ progress:
 - Build passes cleanly (tsc + vite build)
 - 29 unit tests pass (companion-utils + word-replacement)
 - Audio playback verified end-to-end by human
-- Content script is monolithic (387 lines) — split in Phase 3
-- Options page shell built with sidebar nav, Zustand store, 3 UI primitives
+- Content script split into 8 focused modules + 46-line entry point
+- 6 dead code files deleted (offscreen, mic-permission, broken E2E, unused React component)
+- Extension builds cleanly, 29 tests pass after refactor
