@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production-Ready MVP
-current_plan: 03-02
+current_plan: 03-03
 status: in-progress
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-04-12T09:34:39Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-04-12T11:05:00Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # State: Dyslexia Tool MVP Fix-Up
@@ -18,7 +18,7 @@ progress:
 ## Current Status
 - **Phase:** 03-debt-polish (IN PROGRESS)
 - **Current Plan:** 03-02
-- **Plans Completed:** 1 (03-01)
+- **Plans Completed:** 2 (03-01, 03-02)
 - **Milestone:** v1.1
 - **Last session:** 2026-04-12T09:34:39Z
 - **Stopped at:** Completed 03-01-PLAN.md
@@ -44,6 +44,9 @@ progress:
 - [Phase 02-04]: Set 20px base font size — text-sm (14px) was too small for dyslexic users
 - [Phase 03-01]: ES module singleton for companion state — all modules import same mutable object reference
 - [Phase 03-01]: Removed (window as any).setCompanionEnabled debug line — not needed for production
+- [Phase 03-02]: Exported resetDB() from storage for test isolation — closes and deletes Dexie singleton
+- [Phase 03-02]: jsdom style.cssText limitation — verified DOM structure instead of checking individual style properties
+- [Phase 03-02]: fake-indexeddb Blob round-trip limitation in jsdom — tested note CRUD with non-blob fields
 
 ## Blockers
 - None currently
