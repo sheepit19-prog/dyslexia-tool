@@ -38,6 +38,14 @@ export function getDB(): DyslexiaDB {
   return dbInstance
 }
 
+export async function resetDB(): Promise<void> {
+  if (dbInstance) {
+    dbInstance.close()
+    dbInstance = null
+  }
+  await Dexie.delete('DyslexiaDB')
+}
+
 // Settings operations
 export async function getSettings(): Promise<Settings | null> {
   const db = getDB()
