@@ -2,6 +2,16 @@ import { generateSpellingSuggestions } from '../../shared/lib/companion-utils'
 import { getCurrentWord, replaceCurrentWord } from './word-ops'
 import { companionState } from './state'
 
+function applyStylesSafe(element: HTMLElement, styles: Record<string, string>): boolean {
+  try {
+    const cssText = Object.entries(styles).map(([k, v]) => `${k}: ${v}`).join('; ')
+    element.style.cssText = cssText
+    return element.style.cssText.length > 0
+  } catch {
+    return false
+  }
+}
+
 export function showSpellingSuggestions() {
   const current = getCurrentWord()
   console.log('[Content Script] showSpellingSuggestions called, current word:', current)
@@ -20,12 +30,30 @@ export function showSpellingSuggestions() {
   if (suggestions.length === 0) {
     const container = document.createElement('div')
     container.id = 'dyslexia-tool-suggestions'
-    container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:2147483647;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);padding:16px;max-width:320px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:2px solid #F59E0B'
+
+    const inlineSuccess = applyStylesSafe(container, {
+      position: 'fixed',
+      top: '80px',
+      right: '20px',
+      zIndex: '2147483647',
+      background: '#fff',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+      padding: '16px',
+      maxWidth: '320px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      border: '2px solid #F59E0B',
+    })
+
+    if (!inlineSuccess) {
+      container.className = 'dyslexia-tool-suggestions-panel no-suggestions'
+    }
+
     container.innerHTML = `
       <div>
         <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:#111827">No suggestions for "${current.word}"</p>
         <p style="margin:0 0 12px;font-size:13px;color:#6B7280">Try: becuase, recieve, beleive, thier, hte, jsut</p>
-        <button id="close-suggestions" style="padding:8px 16px;background:#6B7280;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Close</button>
+        <button id="close-suggestions" class="dyslexia-tool-close-btn">Close</button>
       </div>
     `
     document.body.appendChild(container)
@@ -35,27 +63,70 @@ export function showSpellingSuggestions() {
 
   const container = document.createElement('div')
   container.id = 'dyslexia-tool-suggestions'
-  container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:2147483647;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);padding:16px;max-width:320px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:2px solid #3B82F6'
 
-  const buttonsHtml = suggestions.map(s =>
-    `<button class="suggestion-btn" data-word="${s}" style="display:inline-block;padding:8px 12px;margin:4px;background:#EFF6FF;color:#1E40AF;border:2px solid #3B82F6;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#3B82F6';this.style.color='white'" onmouseout="this.style.background='#EFF6FF';this.style.color='#1E40AF'">${s}</button>`
-  ).join('')
+  const inlineSuccess = applyStylesSafe(container, {
+    position: 'fixed',
+    top: '80px',
+    right: '20px',
+    zIndex: '2147483647',
+    background: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+    padding: '16px',
+    maxWidth: '320px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px solid #3B82F6',
+  })
 
-  container.innerHTML = `
-    <div>
-      <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:#111827">Suggestions for "${current.word}":</p>
-      <div style="margin-bottom:12px;background:#F9FAFB;padding:12px;border-radius:6px">${buttonsHtml}</div>
-      <button id="close-suggestions" style="padding:8px 16px;background:#6B7280;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Close</button>
-    </div>
-  `
+  if (!inlineSuccess) {
+    container.className = 'dyslexia-tool-suggestions-panel has-suggestions'
+  }
 
+  const suggestionsDiv = document.createElement('div')
+  suggestionsDiv.className = 'dyslexia-tool-suggestions-buttons'
+
+  suggestions.forEach(s => {
+    const btn = document.createElement('button')
+    btn.className = 'dyslexia-tool-suggestion-btn'
+    btn.textContent = s
+    btn.dataset.word = s
+    btn.addEventListener('mouseenter', () => {
+      btn.style.background = '#3B82F6'
+      btn.style.color = 'white'
+    })
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background = '#EFF6FF'
+      btn.style.color = '#1E40AF'
+    })
+    suggestionsDiv.appendChild(btn)
+  })
+
+  const closeBtn = document.createElement('button')
+  closeBtn.id = 'close-suggestions'
+  closeBtn.className = 'dyslexia-tool-close-btn'
+  closeBtn.textContent = 'Close'
+
+  const innerDiv = document.createElement('div')
+  const title = document.createElement('p')
+  title.className = 'dyslexia-tool-suggestions-title'
+  title.textContent = `Suggestions for "${current.word}":`
+  title.style.margin = '0 0 12px'
+  title.style.fontSize = '15px'
+  title.style.fontWeight = '600'
+  title.style.color = '#111827'
+
+  innerDiv.appendChild(title)
+  innerDiv.appendChild(suggestionsDiv)
+  innerDiv.appendChild(closeBtn)
+
+  container.appendChild(innerDiv)
   document.body.appendChild(container)
   console.log('[Content Script] Suggestions panel added to DOM')
 
   setTimeout(() => {
-    container.querySelectorAll('.suggestion-btn').forEach(btn => {
+    container.querySelectorAll('.dyslexia-tool-suggestion-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const selectedWord = btn.getAttribute('data-word')
+        const selectedWord = (btn as HTMLElement).dataset.word
         if (selectedWord && replaceCurrentWord(selectedWord)) {
           companionState.lastFullWord = null
           container.remove()
@@ -63,9 +134,9 @@ export function showSpellingSuggestions() {
       })
     })
 
-    const closeBtn = document.getElementById('close-suggestions')
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
+    const closeBtnEl = document.getElementById('close-suggestions')
+    if (closeBtnEl) {
+      closeBtnEl.addEventListener('click', () => {
         companionState.lastFullWord = null
         container.remove()
       })

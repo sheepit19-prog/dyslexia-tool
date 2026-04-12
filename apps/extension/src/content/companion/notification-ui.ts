@@ -1,6 +1,16 @@
 import { companionState } from './state'
 import { showSpellingSuggestions } from './suggestions-ui'
 
+function applyStylesSafe(element: HTMLElement, styles: Record<string, string>): boolean {
+  try {
+    const cssText = Object.entries(styles).map(([k, v]) => `${k}: ${v}`).join('; ')
+    element.style.cssText = cssText
+    return element.style.cssText.length > 0
+  } catch {
+    return false
+  }
+}
+
 export function showCompanionNotification(payload: { message: string; type?: 'spelling' | 'wording' }) {
   const existing = document.getElementById('dyslexia-tool-companion')
   if (existing) existing.remove()
@@ -11,14 +21,30 @@ export function showCompanionNotification(payload: { message: string; type?: 'sp
   const acceptId = `companion-accept-${Date.now()}`
   const dismissId = `companion-dismiss-${Date.now()}`
 
-  container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:2147483647;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);padding:16px;max-width:300px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:2px solid #3B82F6'
+  const inlineSuccess = applyStylesSafe(container, {
+    position: 'fixed',
+    top: '80px',
+    right: '20px',
+    zIndex: '2147483647',
+    background: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+    padding: '16px',
+    maxWidth: '300px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px solid #3B82F6',
+  })
+
+  if (!inlineSuccess) {
+    container.className = 'dyslexia-tool-notification-panel'
+  }
 
   container.innerHTML = `
     <div>
-      <p style="margin:0;font-size:14px;font-weight:600;color:#111827;line-height:1.4">${payload.message}</p>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button id="${acceptId}" style="padding:8px 16px;background:#3B82F6;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Show suggestions</button>
-        <button id="${dismissId}" style="padding:8px 16px;background:#F3F4F6;color:#374151;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Not now</button>
+      <p class="dyslexia-tool-notification-message">${payload.message}</p>
+      <div class="dyslexia-tool-notification-actions">
+        <button id="${acceptId}" class="dyslexia-tool-accept-btn">Show suggestions</button>
+        <button id="${dismissId}" class="dyslexia-tool-dismiss-btn">Not now</button>
       </div>
     </div>
   `
