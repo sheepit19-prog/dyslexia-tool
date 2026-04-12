@@ -1,4 +1,5 @@
-console.log('[Content Script] Dyslexia Tool loaded')
+const initStart = performance.now()
+console.log('[Content Script] Init started at', initStart)
 
 import { injectFontStyles, removeFontStyles } from './font-injection'
 import { readSelectedText, stopReading } from './tts'
@@ -43,4 +44,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 setTimeout(() => {
   startTypingDetection()
+  const initEnd = performance.now()
+  console.log(`[Content Script] Fully initialized in ${(initEnd - initStart).toFixed(1)}ms`)
 }, 500)

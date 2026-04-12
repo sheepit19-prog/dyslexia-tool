@@ -1,4 +1,5 @@
 export function injectFontStyles(fontFamily: string = 'OpenDyslexic', lineHeight: number = 1.6) {
+  const start = performance.now()
   document.body.classList.add('dyslexia-tool-active')
 
   let fontFaceStyle = document.getElementById('dyslexia-tool-font-face') as HTMLStyleElement | null
@@ -33,6 +34,7 @@ export function injectFontStyles(fontFamily: string = 'OpenDyslexic', lineHeight
     }
   `
   document.head.appendChild(style)
+  console.log(`[Font Injection] Applied in ${(performance.now() - start).toFixed(1)}ms`)
 }
 
 export function removeFontStyles() {

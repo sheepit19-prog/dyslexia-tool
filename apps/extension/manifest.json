@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Dyslexia Tool",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Invisible companion for dyslexic users—proactive help without judgment",
   "icons": {
     "16": "icons/png/icon16-16.png",
