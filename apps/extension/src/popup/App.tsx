@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Settings } from '../shared/types/storage'
 import { sendTabMessage } from '../shared/types/messages'
+import { Onboarding } from './Onboarding'
 
 // Direct IndexedDB access — popup and background share the same DB (same extension origin)
 // This avoids Chrome message passing for audio data, which silently drops Blobs/ArrayBuffers
@@ -26,6 +27,7 @@ export function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [noteCount, setNoteCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [readingRulerEnabled, setReadingRulerEnabled] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -53,13 +55,19 @@ export function App() {
   }, [settings.companionMode])
 
   useEffect(() => {
+    const popupStart = performance.now()
     const loadData = async () => {
       try {
-        const result = await chrome.storage.local.get('settings')
-        if (result.settings) {
-          setSettings(result.settings)
+        const [settingsResult, onboardingResult] = await Promise.all([
+          chrome.storage.local.get('settings'),
+          chrome.storage.local.get('onboardingComplete'),
+        ])
+        if (settingsResult.settings) {
+          setSettings(settingsResult.settings)
         }
+        setShowOnboarding(!onboardingResult.onboardingComplete)
         await loadNotes()
+        console.log(`[Popup] Loaded in ${(performance.now() - popupStart).toFixed(1)}ms`)
       } catch (err) {
         console.error('[Popup] Failed to load data:', err)
         setError('Failed to load settings')
@@ -255,6 +263,14 @@ export function App() {
           <p style={{ fontSize: '14px', color: '#6B7280' }}>Loading...</p>
         </div>
       </div>
+    )
+  }
+
+  if (showOnboarding) {
+    return (
+      <Onboarding onComplete={() => {
+        setShowOnboarding(false)
+      }} />
     )
   }
 
