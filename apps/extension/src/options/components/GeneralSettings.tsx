@@ -31,6 +31,24 @@ export const GeneralSettings: React.FC = () => {
         Configure how text appears on web pages and the extension appearance.
       </p>
 
+      <div className="mb-6">
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 p-4">
+          <div>
+            <p className="text-lg font-medium text-blue-900">Welcome Tour</p>
+            <p className="text-base text-blue-700">Revisit the getting started guide</p>
+          </div>
+          <button
+            onClick={async () => {
+              await chrome.storage.local.remove('onboardingComplete')
+              alert('Welcome tour will appear next time you open the extension popup!')
+            }}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700"
+          >
+            Show Tour
+          </button>
+        </div>
+      </div>
+
       <div className="divide-y divide-gray-100">
         <div className="py-5">
           <Toggle
