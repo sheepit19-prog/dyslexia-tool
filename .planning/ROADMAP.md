@@ -37,23 +37,17 @@ Plans:
 
 ### Phase 3: Technical Debt & Polish
 
-**Goal:** Clean up codebase, fix tests, prepare for store submission.
+**Goal:** Clean codebase with no dead code, type-safe messaging, modular content script, unit test coverage, companion sensitivity wired, CSP graceful degradation, onboarding welcome screen, and Chrome Web Store readiness.
 
 **Dependencies:** Phase 1 & 2 (don't clean code that's about to change)
 
-#### Plan 3.1: Technical Debt Cleanup
-- Remove dead CompanionNotification.tsx component
-- Adopt type-safe sendMessage helper (messages.ts:106-114) across all senders
-- Refactor content script (split monolithic 387-line file into modules)
-- Fix E2E tests to actually validate companion notification appearance
-- Add unit tests for note playback, storage operations, settings
+**Plans:** 4 plans
 
-#### Plan 3.2: Final Polish & Launch Prep
-- CSP handling for banking/government sites
-- Companion detection sensitivity tuning
-- Onboarding welcome screen (3-step tutorial in popup)
-- Build verification and Chrome Web Store readiness check
-- Performance profiling (font injection <100ms, startup <500ms)
+Plans:
+- [ ] 03-01-PLAN.md — Dead code removal + content script module split (Wave 1)
+- [ ] 03-02-PLAN.md — Type-safe messaging completion + unit tests (Wave 1)
+- [ ] 03-03-PLAN.md — Companion sensitivity wiring + CSP graceful degradation (Wave 2)
+- [ ] 03-04-PLAN.md — Onboarding welcome screen + performance profiling + store readiness (Wave 2)
 
 ---
 
@@ -61,6 +55,6 @@ Plans:
 
 | Phase | Status | Plans | Summaries |
 |-------|--------|-------|-----------|
-| 1     | planned | 3     | 0         |
-| 2     | planned | 4     | 0         |
-| 3     | planned | 2     | 0         |
+| 1     | complete | 3     | 3         |
+| 2     | complete | 4     | 4         |
+| 3     | planned  | 4     | 0         |
