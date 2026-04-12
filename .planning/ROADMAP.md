@@ -46,7 +46,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Dead code removal + content script module split (Wave 1)
 - [x] 03-02-PLAN.md — Type-safe messaging completion + unit tests (Wave 1)
-- [ ] 03-03-PLAN.md — Companion sensitivity wiring + CSP graceful degradation (Wave 2)
+- [x] 03-03-PLAN.md — Companion sensitivity wiring + CSP graceful degradation (Wave 2)
 - [ ] 03-04-PLAN.md — Onboarding welcome screen + performance profiling + store readiness (Wave 2)
 
 ---
@@ -57,4 +57,4 @@ Plans:
 |-------|--------|-------|-----------|
 | 1     | complete | 3     | 3         |
 | 2     | complete | 4     | 4         |
-| 3     | in-progress | 4     | 2         |
+| 3     | in-progress | 4     | 3         |
