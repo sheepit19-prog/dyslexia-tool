@@ -7,6 +7,38 @@ import { getCurrentWordFromElement } from '../../shared/lib/companion-utils'
 import { companionState } from './state'
 import { showCompanionNotification } from './notification-ui'
 
+interface SensitivityThresholds {
+  backspaceThreshold: number
+  pauseThreshold: number
+  snoozeDuration: number
+}
+
+async function getSensitivityThresholds(): Promise<SensitivityThresholds> {
+  const result = await chrome.storage.local.get('settings')
+  const sensitivity = result.settings?.companionSensitivity ?? 5
+
+  const factor = sensitivity / 5
+
+  return {
+    backspaceThreshold: Math.max(1, Math.round(BACKSPACE_THRESHOLD / factor)),
+    pauseThreshold: Math.round(PAUSE_THRESHOLD / factor),
+    snoozeDuration: Math.round(SNOOZE_DURATION / factor),
+  }
+}
+
+let cachedThresholds: SensitivityThresholds | null = null
+let thresholdsLoadedAt = 0
+
+async function getThresholds(): Promise<SensitivityThresholds> {
+  const now = Date.now()
+  if (cachedThresholds && now - thresholdsLoadedAt < 60000) {
+    return cachedThresholds
+  }
+  cachedThresholds = await getSensitivityThresholds()
+  thresholdsLoadedAt = now
+  return cachedThresholds
+}
+
 function showStruggleHelp(type: 'spelling' | 'wording') {
   const message = type === 'spelling' ? 'Need help with spelling?' : 'Need help wording this?'
   showCompanionNotification({ message, type })
@@ -59,12 +91,14 @@ function startObservingTextField(element: HTMLElement) {
       companionState.backspaceCount++
       const timeSinceLastOffer = now - companionState.lastOfferTime
 
-      if (companionState.backspaceCount >= BACKSPACE_THRESHOLD && companionState.companionEnabled && timeSinceLastOffer > SNOOZE_DURATION) {
-        console.log('[Content Script] Triggering spelling help')
-        showStruggleHelp('spelling')
-        companionState.lastOfferTime = now
-        companionState.backspaceCount = 0
-      }
+      getThresholds().then(thresholds => {
+        if (companionState.backspaceCount >= thresholds.backspaceThreshold && companionState.companionEnabled && timeSinceLastOffer > thresholds.snoozeDuration) {
+          console.log('[Content Script] Triggering spelling help')
+          showStruggleHelp('spelling')
+          companionState.lastOfferTime = now
+          companionState.backspaceCount = 0
+        }
+      })
     } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
       companionState.backspaceCount = 0
       companionState.lastTypingTime = now
@@ -73,15 +107,16 @@ function startObservingTextField(element: HTMLElement) {
 
   element.addEventListener('keydown', companionState.keydownHandler)
 
-  companionState.pauseCheckInterval = window.setInterval(() => {
+  companionState.pauseCheckInterval = window.setInterval(async () => {
     if (!companionState.currentTextField || !companionState.companionEnabled) return
 
     const now = Date.now()
     const timeSinceTyping = now - companionState.lastTypingTime
+    const thresholds = await getThresholds()
 
-    if (timeSinceTyping > PAUSE_THRESHOLD) {
+    if (timeSinceTyping > thresholds.pauseThreshold) {
       const timeSinceLastOffer = now - companionState.lastOfferTime
-      if (timeSinceLastOffer > SNOOZE_DURATION) {
+      if (timeSinceLastOffer > thresholds.snoozeDuration) {
         showStruggleHelp('wording')
         companionState.lastOfferTime = now
         companionState.lastTypingTime = now
