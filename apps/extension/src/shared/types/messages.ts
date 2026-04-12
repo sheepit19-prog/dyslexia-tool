@@ -89,6 +89,32 @@ export interface MessageMap {
     payload: Partial<FontSettings>
     response: { success: boolean }
   }
+
+  // Recording operations
+  'START_RECORDING': {
+    payload: {}
+    response: { success: boolean; error?: string }
+  }
+
+  'STOP_RECORDING': {
+    payload: {}
+    response: { success: boolean }
+  }
+
+  'SAVE_RECORDED_NOTE': {
+    payload: { audioBase64: string; duration: number }
+    response: { success: boolean; error?: string }
+  }
+
+  'GET_RECORDING_STATE': {
+    payload: {}
+    response: { isRecording: boolean }
+  }
+
+  'RECORDING_STATE_UPDATE': {
+    payload: { isRecording: boolean }
+    response: { success: boolean }
+  }
 }
 
 // Helper function for sending typed messages
@@ -98,6 +124,18 @@ export async function sendMessage<T extends keyof MessageMap>(
 ): Promise<MessageMap[T]['response']> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ type, payload }, (response) => {
+      resolve(response)
+    })
+  })
+}
+
+export async function sendTabMessage<T extends keyof MessageMap>(
+  tabId: number,
+  type: T,
+  payload: MessageMap[T]['payload']
+): Promise<MessageMap[T]['response']> {
+  return new Promise((resolve) => {
+    chrome.tabs.sendMessage(tabId, { type, payload }, (response) => {
       resolve(response)
     })
   })

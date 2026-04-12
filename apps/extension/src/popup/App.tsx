@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Settings } from '../shared/types/storage'
+import { sendTabMessage } from '../shared/types/messages'
 
 // Direct IndexedDB access — popup and background share the same DB (same extension origin)
 // This avoids Chrome message passing for audio data, which silently drops Blobs/ArrayBuffers
@@ -43,10 +44,7 @@ export function App() {
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       if (tabs[0]?.id) {
         try {
-          await chrome.tabs.sendMessage(tabs[0].id, {
-            type: 'COMPANION_SET_ENABLED',
-            payload: { enabled: settings.companionMode === 'proactive' }
-          })
+          await sendTabMessage(tabs[0].id, 'COMPANION_SET_ENABLED', { enabled: settings.companionMode === 'proactive' })
         } catch {
           // Content script not on this page (e.g. chrome:// pages)
         }
@@ -96,10 +94,7 @@ export function App() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
       try {
-        await chrome.tabs.sendMessage(tab.id, {
-          type: 'FONT_APPLY_SETTINGS',
-          payload: { enabled, fontFamily: settings.fontFamily, lineHeight: settings.lineSpacing }
-        })
+        await sendTabMessage(tab.id, 'FONT_APPLY_SETTINGS', { enabled, fontFamily: settings.fontFamily, lineHeight: settings.lineSpacing, letterSpacing: settings.letterSpacing })
       } catch { /* content script not loaded */ }
     }
   }
@@ -108,7 +103,7 @@ export function App() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
       if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: 'TTS_READ_SELECTION' })
+        await sendTabMessage(tab.id, 'TTS_READ_SELECTION', {})
       }
     } catch {
       alert('Please select some text first.')
@@ -120,7 +115,7 @@ export function App() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
       try {
-        await chrome.tabs.sendMessage(tab.id, { type: 'READING_RULER_TOGGLE', payload: { enabled } })
+        await sendTabMessage(tab.id, 'READING_RULER_TOGGLE', { enabled })
       } catch { /* content script not loaded */ }
     }
   }
@@ -134,10 +129,7 @@ export function App() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
       try {
-        await chrome.tabs.sendMessage(tab.id, {
-          type: 'COMPANION_SET_ENABLED',
-          payload: { enabled: !companionEnabled }
-        })
+        await sendTabMessage(tab.id, 'COMPANION_SET_ENABLED', { enabled: !companionEnabled })
       } catch { /* content script not loaded */ }
     }
   }

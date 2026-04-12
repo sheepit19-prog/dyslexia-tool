@@ -11,6 +11,7 @@ import {
   addNote
 } from './storage'
 import type { MessageMap } from '../shared/types/messages'
+import { sendTabMessage } from '../shared/types/messages'
 
 initializeStorage().catch(console.error)
 
@@ -84,7 +85,7 @@ async function handleFontMessage(
       lineSpacing: message.payload.lineHeight
     })
     if (sender.tab?.id) {
-      await chrome.tabs.sendMessage(sender.tab.id, message)
+      await sendTabMessage(sender.tab.id, 'FONT_APPLY_SETTINGS', message.payload)
     }
     return { success: true }
   } catch (error) {
@@ -179,12 +180,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return {}
 
       case 'COMPANION_SHOW_NOTIFICATION':
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
           if (tabs[0]?.id) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              type: 'COMPANION_SHOW_NOTIFICATION',
-              payload: message.payload
-            })
+            await sendTabMessage(tabs[0].id, 'COMPANION_SHOW_NOTIFICATION', message.payload)
           }
         })
         return { success: true }
