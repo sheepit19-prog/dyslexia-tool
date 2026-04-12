@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production-Ready MVP
-current_plan: 03-04
-status: in-progress
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-04-12T10:11:37Z"
+current_plan: none
+status: phase-complete
+stopped_at: "Completed 03-04-PLAN.md"
+last_updated: "2026-04-12T11:13:12Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # State: Dyslexia Tool MVP Fix-Up
 
 ## Current Status
-- **Phase:** 03-debt-polish (IN PROGRESS)
-- **Current Plan:** 03-04
-- **Plans Completed:** 3 (03-01, 03-02, 03-03)
+- **Phase:** 03-debt-polish (COMPLETE)
+- **Current Plan:** None — phase complete
+- **Plans Completed:** 4 (03-01, 03-02, 03-03, 03-04)
 - **Milestone:** v1.1
-- **Last session:** 2026-04-12T10:11:37Z
-- **Stopped at:** Completed 03-03-PLAN.md
+- **Last session:** 2026-04-12T11:13:12Z
+- **Stopped at:** Completed 03-04-PLAN.md
 
 ## Decisions
 - [2026-04-10] Focus on fixing all 20 triaged issues before Chrome Web Store launch
@@ -50,14 +50,18 @@ progress:
 - [Phase 03-03]: 60s threshold cache avoids chrome.storage.local reads on every keystroke
 - [Phase 03-03]: applyStylesSafe returns false on CSP block - CSS classes from manifest content_scripts.css are CSP-exempt
 - [Phase 03-03]: Hover effects on suggestion buttons use CSS :hover pseudo-class in styles.css for CSP-safe fallback
+- [Phase 03-04]: Used chrome.storage.local flag (not chrome.runtime.onInstalled) for first-install detection — onInstalled fires on every update, not just first install
+- [Phase 03-04]: Wikipedia Dyslexia page as "Try it now" target — stable URL with real meaningful text, companion activates on all pages
+- [Phase 03-04]: Version bumped to 1.0.0 — extension ready for Chrome Web Store submission
 
 ## Blockers
 - None currently
 
 ## Notes
 - Build passes cleanly (tsc + vite build)
-- 29 unit tests pass (companion-utils + word-replacement)
+- 60 unit tests pass (companion-utils + word-replacement + storage + content)
 - Audio playback verified end-to-end by human
 - Content script split into 8 focused modules + 46-line entry point
 - 6 dead code files deleted (offscreen, mic-permission, broken E2E, unused React component)
-- Extension builds cleanly, 29 tests pass after refactor
+- Extension v1.0.0 — 3-step onboarding, store readiness checklist complete
+- All 3 phases complete, milestone v1.1 ready for Chrome Web Store submission
