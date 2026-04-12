@@ -23,8 +23,6 @@ export default defineConfig({
       input: {
         popup: 'popup/index.html',
         options: 'options/index.html',
-        offscreen: 'src/offscreen-html/index.html',
-        'mic-permission': 'src/mic-permission/index.html',
       },
     },
   },
