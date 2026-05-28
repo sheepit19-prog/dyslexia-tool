@@ -1,7 +1,0 @@
-{
-  "Sizes": "16, 32, 48, 96, 128, 256, 512",
-  "Files": 0,
-  "Output": "apps\\extension\\icons\\png",
-  "Generated": "2026-04-04 12:15:05",
-  "Source": "apps\\extension\\icons"
-}

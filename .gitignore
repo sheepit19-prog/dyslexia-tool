@@ -7,6 +7,7 @@
 .planning/
 .playwright-mcp/
 .qwen/
+.ruff_cache/
 
 # BMAD
 _bmad/
@@ -24,3 +25,41 @@ QUICK_REFERENCE.md
 SESSION_HANDOFF.md
 plan-*.md
 STORY_*.md
+dyslexia_tool_lean_mvp.md
+wikipedia-before-font.png
+
+# Build output
+dist/
+apps/extension/dist/
+
+# Test results
+test-results/
+
+# Package binaries
+*.zip
+
+# Root docs (planning artifacts)
+/docs/
+
+# Extension docs (except privacy policy)
+/apps/extension/docs/CHROME-STORE-SUBMISSION.md
+/apps/extension/docs/DATA_SAFETY_FORM.md
+/apps/extension/docs/HOSTING_GUIDE.md
+/apps/extension/docs/PUBLICATION_CHECKLIST.md
+/apps/extension/docs/README.md
+/apps/extension/docs/SCREENSHOT_GUIDE.md
+/apps/extension/docs/STORE_LISTING.md
+/apps/extension/docs/screenshots/
+
+# Dev utility scripts
+/apps/extension/scripts/
+
+# Alternate manifests
+manifest.publish.json
+
+# Icon metadata
+**/icons/README.md
+**/icons/png/icon-summary.txt
+
+# Accidental nested copies
+apps/extension/apps/
