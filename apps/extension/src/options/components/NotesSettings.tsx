@@ -35,7 +35,7 @@ export const NotesSettings: React.FC = () => {
             max={2.0}
             step={0.1}
             label="Text-to-Speech Speed"
-            description="Adjust how fast the companion reads text aloud"
+            description="Adjust how fast text is read aloud"
             displayValue={`${settings.ttsSpeed.toFixed(1)}x`}
           />
         </div>

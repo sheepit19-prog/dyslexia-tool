@@ -175,18 +175,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'STOP_RECORDING':
         return await handleStopRecording()
 
-      case 'COMPANION_DETECTED_STRUGGLE':
-        await trackFeatureUsage('companion_struggle_detected')
-        return {}
-
-      case 'COMPANION_SHOW_NOTIFICATION':
-        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-          if (tabs[0]?.id) {
-            await sendTabMessage(tabs[0].id, 'COMPANION_SHOW_NOTIFICATION', message.payload)
-          }
-        })
-        return { success: true }
-
       case 'SETTINGS_UPDATE':
         return await handleSettingsUpdate(message as any)
 
@@ -239,6 +227,21 @@ chrome.runtime.onInstalled.addListener((details) => {
 chrome.runtime.onStartup.addListener(() => {
   console.log('[Service Worker] Service worker started')
   initializeStorage().catch(console.error)
+})
+
+chrome.commands?.onCommand.addListener((command) => {
+  if (command === 'toggle-bionic-reading') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.storage.local.get('settings', (result) => {
+          const current = result.settings?.bionicReadingEnabled ?? false
+          const newSettings = { ...result.settings, bionicReadingEnabled: !current }
+          chrome.storage.local.set({ settings: newSettings })
+          sendTabMessage(tabs[0]!.id!, 'BIONIC_READING_TOGGLE', { enabled: !current }).catch(() => {})
+        })
+      }
+    })
+  }
 })
 
 chrome.alarms?.create('keepAlive', { periodInMinutes: 1 })

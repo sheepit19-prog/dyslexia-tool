@@ -1,0 +1,29 @@
+- generic [ref=e3]:
+  - heading "Dyslexia Tool" [level=1] [ref=e4]
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: Dyslexia Font
+        - paragraph [ref=e9]: Apply dyslexia-friendly font
+      - button [ref=e10] [cursor=pointer]
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - paragraph [ref=e14]: Read Aloud
+        - paragraph [ref=e15]: Read selected text
+      - button "Read" [ref=e16] [cursor=pointer]
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - paragraph [ref=e19]: Reading Ruler
+        - paragraph [ref=e20]: Highlight current line
+      - button [ref=e21] [cursor=pointer]
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - paragraph [ref=e25]: Companion Mode
+        - paragraph [ref=e26]: Active - offers help
+      - button [ref=e27] [cursor=pointer]
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - paragraph [ref=e32]: Voice Notes
+        - paragraph [ref=e33]: 0/50 this month
+      - button "● Record" [ref=e34] [cursor=pointer]
+    - paragraph [ref=e36]: v0.1.0 - MVP

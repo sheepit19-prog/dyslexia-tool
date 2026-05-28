@@ -156,7 +156,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div style={iconStyle}>📖</div>
           <h2 style={headingStyle}>Let's make reading easier for you.</h2>
           <p style={descriptionStyle}>
-            Dyslexia Tool helps you as you browse the web. It applies dyslexia-friendly fonts to pages you visit, offers gentle spelling suggestions while you type, and can read text aloud — all with no judgment.
+            Dyslexia Tool helps you as you browse the web. It applies dyslexia-friendly fonts to pages you visit, reads text aloud, and lets you capture voice notes — all with no judgment.
           </p>
         </>
       )
@@ -165,20 +165,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     if (currentStep === 2) {
       return (
         <>
-          <div style={iconStyle}>💙</div>
-          <h2 style={headingStyle}>A friend that notices when you need help</h2>
+          <div style={iconStyle}>🎙️</div>
+          <h2 style={headingStyle}>Capture your thoughts instantly</h2>
           <p style={descriptionStyle}>
-            The companion watches for typing struggles — like repeated backspaces — and offers friendly spelling suggestions. It's subtle, supportive, and only appears when you want it.
+            Press Ctrl+Shift+N anytime to record a voice note. No need to switch apps or grab a pen — just speak and your note is saved.
           </p>
           <div style={previewBoxStyle}>
-            <div style={previewLabelStyle}>As you type, you'll see suggestions like:</div>
-            <p style={previewTextStyle}>Suggestions for <em>"becuase"</em>:</p>
+            <div style={previewLabelStyle}>Quick voice capture:</div>
+            <p style={previewTextStyle}>Press the Record button and speak freely.</p>
             <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-              <button style={{ padding: '4px 10px', backgroundColor: '#3B82F6', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 500, cursor: 'default' }}>
-                because
+              <button style={{ padding: '4px 10px', backgroundColor: '#10B981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 500, cursor: 'default' }}>
+                ● Record
               </button>
             </div>
-            <p style={suggestionStyle}>Click to replace your word</p>
+            <p style={suggestionStyle}>Play back or delete notes anytime</p>
           </div>
         </>
       )
@@ -190,13 +190,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div style={iconStyle}>⚙️</div>
           <h2 style={headingStyle}>Customize your experience</h2>
           <p style={descriptionStyle}>
-            Right-click the extension icon and choose <strong>Options</strong> anytime to adjust fonts, companion sensitivity, and more. Your settings sync automatically across all your devices.
+            Right-click the extension icon and choose <strong>Options</strong> anytime to adjust fonts, reading ruler, voice speed, and more.
           </p>
           <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#F3F4F6', borderRadius: '12px', width: '100%', maxWidth: '300px' }}>
             <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500, marginBottom: '8px' }}>What you can customize:</div>
             <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#6B7280', lineHeight: 1.8, textAlign: 'left' }}>
               <li>Font family and spacing</li>
-              <li>Companion sensitivity</li>
               <li>Reading ruler style</li>
               <li>Voice speed</li>
             </ul>

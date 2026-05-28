@@ -11,7 +11,6 @@ interface SidebarProps {
 
 const CATEGORIES = [
   { id: 'general', label: 'General', icon: '⚙️' },
-  { id: 'companion', label: 'Companion', icon: '🤝' },
   { id: 'notes', label: 'Notes', icon: '📝' },
   { id: 'hotkeys', label: 'Hotkeys', icon: '⌨️' },
   { id: 'per-site', label: 'Per-Site', icon: '🌐' },

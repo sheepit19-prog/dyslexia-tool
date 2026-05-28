@@ -3,8 +3,6 @@ import type { Settings } from '../shared/types/storage'
 import { sendTabMessage } from '../shared/types/messages'
 import { Onboarding } from './Onboarding'
 
-// Direct IndexedDB access — popup and background share the same DB (same extension origin)
-// This avoids Chrome message passing for audio data, which silently drops Blobs/ArrayBuffers
 import { getNotes as dbGetNotes, addNote as dbAddNote, deleteNote as dbDeleteNote, getNoteAudio as dbGetNoteAudio, getNotesCount as dbGetNotesCount } from '../background/storage'
 
 const DEFAULT_SETTINGS: Settings = {
@@ -13,8 +11,8 @@ const DEFAULT_SETTINGS: Settings = {
   fontFamily: 'OpenDyslexic',
   lineSpacing: 1.6,
   letterSpacing: 0.05,
-  companionMode: 'proactive',
-  companionSensitivity: 5,
+  bionicReadingEnabled: false,
+  spellingEnabled: false,
   theme: 'light',
   accentColor: '#3B82F6',
   ttsSpeed: 1.0,
@@ -31,7 +29,6 @@ export function App() {
   const [error, setError] = useState<string | null>(null)
   const [readingRulerEnabled, setReadingRulerEnabled] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [companionEnabled, setCompanionEnabled] = useState(settings.companionMode === 'proactive')
   const [notes, setNotes] = useState<Array<{ id: string; title: string | null; duration: number; createdAt: string | Date }>>([])
   const [playingNoteId, setPlayingNoteId] = useState<string | null>(null)
   const [recordingTime, setRecordingTime] = useState(0)
@@ -40,19 +37,6 @@ export function App() {
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => {
-    setCompanionEnabled(settings.companionMode === 'proactive')
-    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      if (tabs[0]?.id) {
-        try {
-          await sendTabMessage(tabs[0].id, 'COMPANION_SET_ENABLED', { enabled: settings.companionMode === 'proactive' })
-        } catch {
-          // Content script not on this page (e.g. chrome:// pages)
-        }
-      }
-    })
-  }, [settings.companionMode])
 
   useEffect(() => {
     const popupStart = performance.now()
@@ -78,7 +62,6 @@ export function App() {
     loadData()
   }, [])
 
-  // Load notes directly from IndexedDB — no message passing
   const loadNotes = async () => {
     try {
       const allNotes = await dbGetNotes(50)
@@ -128,30 +111,26 @@ export function App() {
     }
   }
 
-  const toggleCompanionMode = async () => {
-    const newMode: 'proactive' | 'reactive' | 'off' = companionEnabled ? 'off' : 'proactive'
-    const newSettings = { ...settings, companionMode: newMode }
+  const toggleBionicReading = async (enabled: boolean) => {
+    const newSettings = { ...settings, bionicReadingEnabled: enabled }
     setSettings(newSettings)
-    setCompanionEnabled(!companionEnabled)
     await chrome.storage.local.set({ settings: newSettings })
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
       try {
-        await sendTabMessage(tab.id, 'COMPANION_SET_ENABLED', { enabled: !companionEnabled })
+        await sendTabMessage(tab.id, 'BIONIC_READING_TOGGLE', { enabled })
       } catch { /* content script not loaded */ }
     }
   }
 
   const startRecording = async () => {
     try {
-      // Check monthly limit
       const count = await dbGetNotesCount()
       if (count >= 50) {
         alert('Monthly note limit reached (50 notes).')
         return
       }
 
-      // Request mic permission — popup is a visible context, this works
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       chunksRef.current = []
       const recorder = new MediaRecorder(stream)
@@ -163,7 +142,6 @@ export function App() {
       }
 
       recorder.onstop = async () => {
-        // Stop timer
         if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
         setRecordingTime(0)
         stream.getTracks().forEach(track => track.stop())
@@ -173,7 +151,6 @@ export function App() {
         chunksRef.current = []
         mediaRecorderRef.current = null
 
-        // Save directly to IndexedDB — no message passing needed!
         try {
           const currentCount = await dbGetNotesCount()
           const title = `Voice Note #${currentCount + 1} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -195,7 +172,6 @@ export function App() {
       recorder.start()
       setIsRecording(true)
 
-      // Start live timer
       timerRef.current = setInterval(() => {
         setRecordingTime(Math.floor((Date.now() - startTimeRef.current) / 1000))
       }, 200)
@@ -217,18 +193,15 @@ export function App() {
   }
 
   const playNote = async (noteId: string) => {
-    // If clicking the currently playing note → stop
     if (playingNoteId === noteId) {
       if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
       audioRef.current = null
       setPlayingNoteId(null)
       return
     }
-    // Stop any existing playback
     if (audioRef.current) { audioRef.current.pause(); URL.revokeObjectURL(audioRef.current.src) }
 
     try {
-      // Read audio Blob directly from IndexedDB — no serialization!
       const audioBlob = await dbGetNoteAudio(noteId)
       if (audioBlob) {
         const url = URL.createObjectURL(audioBlob)
@@ -302,6 +275,16 @@ export function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
           <div>
+            <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Bionic Reading</p>
+            <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Bold first half of words</p>
+          </div>
+          <button onClick={() => toggleBionicReading(!settings.bionicReadingEnabled)} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: settings.bionicReadingEnabled ? '#F59E0B' : '#D1D5DB' }}>
+            <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: settings.bionicReadingEnabled ? '28px' : '4px' }} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
+          <div>
             <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Read Aloud</p>
             <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Read selected text</p>
           </div>
@@ -315,16 +298,6 @@ export function App() {
           </div>
           <button onClick={() => toggleReadingRuler(!readingRulerEnabled)} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: readingRulerEnabled ? '#10B981' : '#D1D5DB' }}>
             <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: readingRulerEnabled ? '28px' : '4px' }} />
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
-          <div>
-            <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Companion Mode</p>
-            <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>{companionEnabled ? 'Active - offers help' : 'Disabled'}</p>
-          </div>
-          <button onClick={toggleCompanionMode} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: companionEnabled ? '#8B5CF6' : '#D1D5DB' }}>
-            <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: companionEnabled ? '28px' : '4px' }} />
           </button>
         </div>
 
@@ -375,8 +348,16 @@ export function App() {
           )}
         </div>
 
-        <div style={{ paddingTop: '8px', borderTop: '1px solid #E5E7EB', textAlign: 'center' }}>
-          <p style={{ fontSize: '12px', color: '#9CA3AF', margin: 0 }}>v0.1.0 - MVP</p>
+        <div style={{ paddingTop: '8px', borderTop: '1px solid #E5E7EB', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <a
+            href="https://chromewebstore.google.com/detail/hkingdeoobbaddphljhgolilcdlfhkfe/reviews"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: '12px', color: '#F59E0B', textDecoration: 'none', cursor: 'pointer' }}
+          >
+            Enjoying Dyslexia Tool? Leave a review
+          </a>
+          <p style={{ fontSize: '12px', color: '#9CA3AF', margin: 0 }}>v1.1.0</p>
         </div>
       </div>
     </div>

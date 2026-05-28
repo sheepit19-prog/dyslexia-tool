@@ -1,17 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Dyslexia Tool",
-  "version": "0.1.0",
-  "description": "Invisible companion for dyslexic users—proactive help without judgment",
+  "version": "1.1.0",
+  "description": "Free dyslexia reading & writing tools — font changes, text-to-speech, reading ruler, and voice notes.",
   "icons": {
-    "16": "icons/icon16.svg",
-    "48": "icons/icon48.svg",
-    "128": "icons/icon128.svg"
+    "16": "icons/png/icon16-16.png",
+    "48": "icons/png/icon48-48.png",
+    "128": "icons/png/icon128-128.png"
   },
   "permissions": [
     "activeTab",
-    "storage",
-    "offscreen"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -20,9 +19,9 @@
     "default_popup": "popup/index.html",
     "default_title": "Dyslexia Tool",
     "default_icon": {
-      "16": "icons/icon16.svg",
-      "48": "icons/icon48.svg",
-      "128": "icons/icon128.svg"
+      "16": "icons/png/icon16-16.png",
+      "48": "icons/png/icon48-48.png",
+      "128": "icons/png/icon128-128.png"
     }
   },
   "background": {
@@ -32,7 +31,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/index.tsx-Me88jFrE.js"
+        "assets/index.tsx-CHrce6_-.js"
       ],
       "matches": [
         "<all_urls>"
@@ -53,12 +52,37 @@
       "resources": [
         "fonts/*",
         "icons/*",
-        "src/offscreen-html/*",
-        "assets/index.tsx-Me88jFrE.js",
-        "assets/index.tsx-Me88jFrE.js.map"
+        "assets/index.tsx-CHrce6_-.js",
+        "assets/index.tsx-CHrce6_-.js.map"
       ],
       "use_dynamic_url": false
     }
   ],
+  "commands": {
+    "toggle-font": {
+      "description": "Toggle dyslexia font",
+      "suggested_key": {
+        "default": "Ctrl+Shift+F"
+      }
+    },
+    "read-aloud": {
+      "description": "Read selected text aloud",
+      "suggested_key": {
+        "default": "Ctrl+Shift+R"
+      }
+    },
+    "toggle-bionic-reading": {
+      "description": "Toggle bionic reading mode",
+      "suggested_key": {
+        "default": "Ctrl+Shift+B"
+      }
+    },
+    "toggle-reading-ruler": {
+      "description": "Toggle reading ruler",
+      "suggested_key": {
+        "default": "Ctrl+Shift+L"
+      }
+    }
+  },
   "minimum_chrome_version": "90"
 }

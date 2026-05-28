@@ -29,7 +29,7 @@ export const HotkeysSettings: React.FC = () => {
       setCommands([
         { name: 'toggle-font', description: 'Toggle dyslexia font', shortcut: 'Ctrl+Shift+F' },
         { name: 'read-aloud', description: 'Read selected text aloud', shortcut: 'Ctrl+Shift+R' },
-        { name: 'toggle-companion', description: 'Toggle companion mode', shortcut: 'Ctrl+Shift+C' },
+        { name: 'toggle-bionic-reading', description: 'Toggle bionic reading mode', shortcut: 'Ctrl+Shift+B' },
         { name: 'toggle-reading-ruler', description: 'Toggle reading ruler', shortcut: 'Ctrl+Shift+L' }
       ])
       setLoading(false)

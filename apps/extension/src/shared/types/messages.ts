@@ -12,10 +12,6 @@ export interface FontSettings {
   letterSpacing: number
 }
 
-// Companion-related types
-export type StruggleType = 'typing' | 'reading'
-export type StruggleConfidence = 'low' | 'medium' | 'high'
-
 // Message Map - ALL message types must be defined here
 export interface MessageMap {
   // Font operations
@@ -28,22 +24,6 @@ export interface MessageMap {
   'GET_NOTE_AUDIO': {
     payload: { noteId: string }
     response: { success: boolean; audioBlob?: Blob; error?: string }
-  }
-  
-  // Companion operations
-  'COMPANION_DETECTED_STRUGGLE': {
-    payload: { type: StruggleType; confidence: StruggleConfidence }
-    response: void
-  }
-  
-  'COMPANION_SHOW_NOTIFICATION': {
-    payload: { type: StruggleType; message: string }
-    response: { success: boolean }
-  }
-  
-  'COMPANION_SET_ENABLED': {
-    payload: { enabled: boolean }
-    response: { success: boolean }
   }
   
   // TTS operations
@@ -59,6 +39,18 @@ export interface MessageMap {
   
   // Reading ruler
   'READING_RULER_TOGGLE': {
+    payload: { enabled: boolean }
+    response: { success: boolean }
+  }
+  
+  // Bionic reading
+  'BIONIC_READING_TOGGLE': {
+    payload: { enabled: boolean }
+    response: { success: boolean }
+  }
+  
+  // Spelling monitor
+  'SPELLING_TOGGLE': {
     payload: { enabled: boolean }
     response: { success: boolean }
   }

@@ -5,7 +5,6 @@
 import React, { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { GeneralSettings } from './components/GeneralSettings'
-import { CompanionSettings } from './components/CompanionSettings'
 import { NotesSettings } from './components/NotesSettings'
 import { HotkeysSettings } from './components/HotkeysSettings'
 import { PerSiteSettings } from './components/PerSiteSettings'
@@ -38,7 +37,6 @@ const SaveIndicator: React.FC = () => {
 
 const SECTIONS = [
   { id: 'general', label: 'General' },
-  { id: 'companion', label: 'Companion' },
   { id: 'notes', label: 'Notes' },
   { id: 'hotkeys', label: 'Hotkeys' },
   { id: 'per-site', label: 'Per-Site' },
@@ -76,7 +74,6 @@ export const App: React.FC = () => {
               className={activeSection === section.id ? 'block' : 'hidden'}
             >
               {section.id === 'general' && <GeneralSettings />}
-              {section.id === 'companion' && <CompanionSettings />}
               {section.id === 'notes' && <NotesSettings />}
               {section.id === 'hotkeys' && <HotkeysSettings />}
               {section.id === 'per-site' && <PerSiteSettings />}

@@ -8,8 +8,8 @@ export interface Settings {
   fontFamily: 'OpenDyslexic' | 'Arial' | 'Verdana' | 'system'
   lineSpacing: number // 1.0 - 2.0
   letterSpacing: number // 0 - 0.1em
-  companionMode: 'proactive' | 'reactive' | 'off'
-  companionSensitivity: number // 1-10
+  bionicReadingEnabled: boolean
+  spellingEnabled: boolean
   theme: 'light' | 'dark' | 'system'
   accentColor: string
   ttsSpeed: number // 0.5 - 2.0
