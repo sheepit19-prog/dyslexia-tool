@@ -15,3 +15,12 @@ _bmad-output/
 # Skills
 skills/
 skills-lock.json
+
+# Planning/development docs
+*_plan.md
+*_PLAN.md
+PROJECT_SUMMARY.md
+QUICK_REFERENCE.md
+SESSION_HANDOFF.md
+plan-*.md
+STORY_*.md
