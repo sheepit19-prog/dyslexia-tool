@@ -1,3 +1,0 @@
-[     528ms] [WARNING] Skipped unavailable module ext.wp25EasterEggs @ https://en.wikipedia.org/w/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=vector-2022:6
-[     808ms] [LOG] [Content Script] Dyslexia Tool loaded @ chrome-extension://nhdniigaglmdkkbgjgcghioblbdfljij/assets/index.tsx-huerYvce.js:0
-[    4769ms] [WARNING] movePinnableElement: destination container not found  vector-toc-unpinned-container @ https://en.wikipedia.org/w/load.php?lang=en&modules=skins.vector.js&skin=vector-2022&version=jrfkr:37

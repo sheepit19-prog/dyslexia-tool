@@ -1,0 +1,17 @@
+# Agent/config directories
+.agent/
+.claude/
+.agents/
+.gemini/
+.opencode/
+.planning/
+.playwright-mcp/
+.qwen/
+
+# BMAD
+_bmad/
+_bmad-output/
+
+# Skills
+skills/
+skills-lock.json
