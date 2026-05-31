@@ -1,140 +1,74 @@
-# Dyslexia Tool - Chrome Extension
+# Dyslexia Tool — Chrome Extension
 
-**Version:** 0.1.0 (MVP Development)
+Free Chrome extension for dyslexia reading and writing assistance. Customizable fonts, bionic reading, text-to-speech, reading ruler, spell checking, and voice notes — all processed locally on your device.
 
-An invisible companion for dyslexic users—proactive help without judgment.
+## Features
 
-## 🚀 Quick Start
+| Feature | Description | Shortcut |
+|---|---|---|
+| **Dyslexia-Friendly Fonts** | OpenDyslexic, Arial, Verdana with adjustable letter/line spacing | `Ctrl+Shift+F` |
+| **Bionic Reading** | Bold first syllables to guide eye movement | `Ctrl+Shift+B` |
+| **Read Aloud (TTS)** | Text-to-speech with adjustable speed (0.5x–2.0x) | `Ctrl+Shift+R` |
+| **Reading Ruler** | Line highlight to reduce visual clutter | `Ctrl+Shift+L` |
+| **Spell Checking** | Real-time spelling suggestions on any page | — |
+| **Voice Notes** | Record, transcribe, and tag audio notes (IndexedDB) | — |
+| **Site Preferences** | Per-website settings override global defaults | — |
+| **Dark Mode** | Light, dark, and system-following themes | — |
 
-### Development
+## Installation
 
+### Chrome Web Store
+Available on the [Chrome Web Store](https://chrome.google.com/webstore) (coming soon).
+
+### Manual (Developer Mode)
 ```bash
-# Install dependencies
+cd apps/extension
 npm install
-
-# Start development server (with HMR)
-npm run dev
-
-# Load extension in Chrome:
-# 1. Open chrome://extensions
-# 2. Enable "Developer mode"
-# 3. Click "Load unpacked"
-# 4. Select the 'dist' folder
-```
-
-### Build for Production
-
-```bash
 npm run build
 ```
+1. Open `chrome://extensions`
+2. Enable "Developer mode"
+3. Click "Load unpacked" and select the `dist/` folder
 
-## 📁 Project Structure
+## Development
+
+```bash
+cd apps/extension
+
+npm install        # Install dependencies
+npm run dev        # Dev server with hot reload
+npm test           # Run unit tests
+npm run test:e2e   # Run E2E tests
+npm run build      # Production build
+```
+
+## Project Structure
 
 ```
 src/
-├── background/          # Service worker (Manifest V3)
-│   └── index.ts        # Message routing, storage operations
-├── content/            # Content scripts injected into pages
-│   ├── index.tsx       # Entry point
-│   ├── styles.css      # Content script styles
-│   ├── companion-ui/   # Companion notification components
-│   └── font-injector/  # Font injection logic (TODO)
-├── popup/              # Extension popup UI
-│   ├── App.tsx         # Main popup component
-│   ├── main.tsx        # Entry point
-│   └── index.css       # Popup styles
-├── options/            # Options/settings page
-│   └── (TODO)
-└── shared/             # Shared types and utilities
-    └── types/          # TypeScript definitions
+├── background/       # Service worker (Manifest V3)
+├── content/          # Content scripts injected into pages
+│   ├── companion-ui/ # Companion notification components
+│   └── font-injector/ # Font injection logic
+├── popup/            # Extension popup UI
+├── options/          # Settings page
+└── shared/           # Shared types and utilities
 ```
 
-## 🎯 MVP Features (In Development)
+## Tech Stack
 
-### Phase 1 - Foundation (Current)
-- [x] Project initialization
-- [x] CRXJS + Vite setup
-- [x] Manifest V3 configuration
-- [ ] Service worker message routing
-- [ ] Content script injection
-- [ ] Popup UI foundation
+- **React 19** + **TypeScript** (strict mode)
+- **Vite 7** with `@crxjs/vite-plugin`
+- **Tailwind CSS 4**
+- **Zustand** for state management
+- **Dexie.js** for IndexedDB
+- **Chrome Extension Manifest V3**
+- **Vitest** + **Playwright** for testing
 
-### Phase 2 - READ Features
-- [ ] OpenDyslexic font injection
-- [ ] Line spacing controls
-- [ ] Letter spacing controls
-- [ ] Text-to-speech integration
-- [ ] Reading ruler/highlight
+## Privacy
 
-### Phase 3 - REMEMBER Features
-- [ ] Voice note capture
-- [ ] Note playback
-- [ ] Note management
-- [ ] IndexedDB storage
+All processing happens locally on your device. No data is collected, transmitted, or sold. Text transformations occur in-browser. See [Privacy Policy](docs/PRIVACY_POLICY.md).
 
-### Phase 4 - Companion Intelligence
-- [ ] Typing pattern detection
-- [ ] Reading fatigue detection
-- [ ] Contextual help offers
-- [ ] User preference learning
-
-## 🛠️ Tech Stack
-
-- **Build:** Vite 7.x + CRXJS
-- **Framework:** React 19.x + TypeScript 5.x
-- **State:** Zustand 5.x
-- **Storage:** IndexedDB via Dexie.js
-- **Styling:** Tailwind CSS 4.x
-- **Testing:** Vitest + Playwright
-
-## 📋 Development Checklist
-
-### Story 1.1: Initialize Extension Project
-
-- [x] Directory structure created
-- [x] package.json configured
-- [x] Vite + CRXJS configured
-- [x] TypeScript strict mode enabled
-- [x] Manifest V3 created
-- [x] Service worker entry point
-- [x] Content script entry point
-- [x] Popup UI foundation
-- [x] Shared types defined
-- [ ] `npm run dev` starts without errors
-- [ ] Extension loads in Chrome
-
-## 🔧 Commands
-
-```bash
-# Development
-npm run dev          # Start Vite dev server
-
-# Build
-npm run build        # Build for production
-npm run preview      # Preview production build
-
-# Testing
-npm run test         # Run unit tests
-npm run test:e2e     # Run E2E tests with Playwright
-```
-
-## 🐛 Known Issues
-
-- Icons not yet created (using placeholders)
-- Options page not yet implemented
-- Font files need to be added
-
-## 📝 Next Steps
-
-1. Add icon files to `icons/` directory
-2. Add OpenDyslexic font files to `fonts/` directory
-3. Test extension loads in Chrome
-4. Continue with Story 1.2 (Manifest V3 refinement)
-
-## 📄 License
+## License
 
 MIT
-
----
-
-**Status:** 🚧 In Development (MVP Phase)
