@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dyslexia Tool — Free Chrome Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f9fafb;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 60px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            color: white;
+        }
+
+        header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        header .subtitle {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 32px;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #2563eb;
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        section {
+            padding: 70px 0;
+        }
+
+        .section-label {
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+        }
+
+        .section-desc {
+            font-size: 17px;
+            color: #6b7280;
+            max-width: 640px;
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 28px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .feature-card .icon {
+            font-size: 28px;
+            margin-bottom: 14px;
+        }
+
+        .feature-card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .feature-card .shortcut {
+            display: inline-block;
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .privacy-note {
+            background: white;
+            padding: 36px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border-left: 4px solid #2563eb;
+            text-align: center;
+        }
+
+        .privacy-note h3 {
+            font-size: 20px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .privacy-note p {
+            color: #6b7280;
+            font-size: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .privacy-note a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .privacy-note a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        footer a {
+            color: #6b7280;
+            text-decoration: none;
+            margin: 0 12px;
+        }
+
+        footer a:hover {
+            color: #2563eb;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #4b5563;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 50px 20px 40px;
+            }
+
+            header h1 {
+                font-size: 30px;
+            }
+
+            header .subtitle {
+                font-size: 17px;
+            }
+
+            section {
+                padding: 50px 0;
+            }
+
+            .section-title {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Dyslexia Tool</h1>
+            <p class="subtitle">Free Chrome extension for dyslexia reading and writing assistance — customizable fonts, bionic reading, text-to-speech, and more.</p>
+            <a class="cta-button" href="https://chromewebstore.google.com/?q=dyslexia+tool" target="_blank">Add to Chrome</a>
+        </div>
+    </header>
+
+    <section>
+        <div class="container">
+            <p class="section-label">Features</p>
+            <h2 class="section-title">Everything you need to read better</h2>
+            <p class="section-desc">Works on any website. All processing happens locally — no data leaves your browser.</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon">&#x1F310;</div>
+                    <h3>Dyslexia-Friendly Fonts</h3>
+                    <p>Switch to OpenDyslexic, Arial, or Verdana with adjustable letter and line spacing.</p>
+                    <span class="shortcut">Ctrl+Shift+F</span>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#x1F4D6;</div>
+                    <h3>Bionic Reading</h3>
+                    <p>Bold first syllables to guide eye movement and improve reading speed.</p>
+                    <span class="shortcut">Ctrl+Shift+B</span>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#x1F50A;</div>
+                    <h3>Read Aloud (TTS)</h3>
+                    <p>Text-to-speech with adjustable speed from 0.5x to 2.0x.</p>
+                    <span class="shortcut">Ctrl+Shift+R</span>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#x1F4CF;</div>
+                    <h3>Reading Ruler</h3>
+                    <p>Highlight the line you're reading to reduce visual clutter.</p>
+                    <span class="shortcut">Ctrl+Shift+L</span>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#x270D;</div>
+                    <h3>Spell Checking</h3>
+                    <p>Real-time spelling suggestions while typing on any page.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#x1F3A4;</div>
+                    <h3>Voice Notes</h3>
+                    <p>Record, transcribe, and tag audio notes saved locally to your device.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section style="padding-top: 0;">
+        <div class="container">
+            <div class="privacy-note">
+                <h3>Private by Design</h3>
+                <p>Everything runs locally on your device. No accounts, no tracking, no data sent anywhere. Read our <a href="privacy-policy.html">Privacy Policy</a> for details.</p>
+            </div>
+        </div>
+    </section>
+
+    <section style="text-align: center; padding-top: 0;">
+        <div class="container">
+            <h2 class="section-title">Built With</h2>
+            <div class="badges">
+                <span class="badge">React 19</span>
+                <span class="badge">TypeScript</span>
+                <span class="badge">Vite 7</span>
+                <span class="badge">Tailwind CSS</span>
+                <span class="badge">Manifest V3</span>
+                <span class="badge">MIT License</span>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="https://github.com/sheepit19-prog/dyslexia-tool" target="_blank">GitHub</a>
+                <a href="mailto:sheepit19.prog@gmail.com">Contact</a>
+            </p>
+            <p style="margin-top: 12px;">&copy; 2026 Dyslexia Tool</p>
+        </div>
+    </footer>
+</body>
+</html>

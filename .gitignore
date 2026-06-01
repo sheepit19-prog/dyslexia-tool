@@ -38,8 +38,9 @@ test-results/
 # Package binaries
 *.zip
 
-# Root docs (planning artifacts)
-/docs/
+# Root docs (planning artifacts only)
+/docs/plan-*.md
+/docs/chrome-store-listing.md
 
 # Extension docs (except privacy policy)
 /apps/extension/docs/CHROME-STORE-SUBMISSION.md
