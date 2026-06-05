@@ -191,24 +191,19 @@ export function App() {
     }
   }, [featureEnabled.ruler])
 
-  // Re-apply features when page changes
-  useEffect(() => {
-    // Small delay to let TextLayer render before applying features
-    const timer = setTimeout(() => {
-      const container = getTextLayerContainer()
-      if (!container) return
+  // Re-apply features when the text layer DOM is ready after each page render
+  const handleTextLayerReady = useCallback(() => {
+    const container = getTextLayerContainer()
+    if (!container) return
 
-      if (featureEnabled.font) {
-        const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
-        applyFontStyles(container, { fontFamily, lineSpacing: 1.6, letterSpacing: 0.05 })
-      }
-      if (featureEnabled.bionic) {
-        applyBionicToLayer(container)
-      }
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [currentPage])
+    if (featureEnabled.font) {
+      const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
+      applyFontStyles(container, { fontFamily, lineSpacing: 1.6, letterSpacing: 0.05 })
+    }
+    if (featureEnabled.bionic) {
+      applyBionicToLayer(container)
+    }
+  }, [featureEnabled.font, featureEnabled.bionic, initialFeatures?.fontFamily])
 
   // Clean up ruler on unmount
   useEffect(() => {
@@ -361,6 +356,7 @@ export function App() {
               pdf={pdf}
               pageNumber={currentPage}
               onTextContentExtracted={handleTextContentExtracted}
+              onTextLayerReady={handleTextLayerReady}
             />
           </div>
         )}

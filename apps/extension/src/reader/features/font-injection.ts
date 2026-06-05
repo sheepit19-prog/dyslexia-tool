@@ -6,14 +6,10 @@ export interface FontSettings {
 
 /**
  * Applies user-configured font family and spacing CSS to a text layer
- * container element.
+ * container element AND all its child spans.
  *
- * Operates on the text layer `<div>` (the container of all positioned
- * text spans), *not* the entire document body.  The caller is responsible
- * for targeting the correct container.
- *
- * @param container The text layer DOM element.
- * @param settings  Properties to apply.
+ * The text layer spans have inline font-family, font-size, and line-height
+ * that would otherwise block container-level cascading.
  */
 export function applyFontStyles(
   container: HTMLElement,
@@ -21,35 +17,43 @@ export function applyFontStyles(
 ): void {
   container.dataset.dyslexiaFontApplied = 'true'
 
-  if (settings.fontFamily && settings.fontFamily !== 'system') {
-    container.style.setProperty('font-family', settings.fontFamily, 'important')
-  }
+  const family = settings.fontFamily && settings.fontFamily !== 'system'
+    ? settings.fontFamily
+    : null
+  const lineHeight = settings.lineSpacing
+    ? String(settings.lineSpacing)
+    : null
+  const letterSpacing = settings.letterSpacing !== undefined
+    ? `${settings.letterSpacing}em`
+    : null
 
-  if (settings.lineSpacing) {
-    container.style.setProperty(
-      'line-height',
-      String(settings.lineSpacing),
-      'important',
-    )
-  }
+  // Apply to container (for any spans that don't have inline overrides)
+  if (family) container.style.setProperty('font-family', family, 'important')
+  if (lineHeight) container.style.setProperty('line-height', lineHeight, 'important')
+  if (letterSpacing) container.style.setProperty('letter-spacing', letterSpacing, 'important')
 
-  if (settings.letterSpacing !== undefined) {
-    container.style.setProperty(
-      'letter-spacing',
-      `${settings.letterSpacing}em`,
-      'important',
-    )
+  // Override inline styles on each span so cascading actually works
+  const spans = container.querySelectorAll<HTMLSpanElement>('span')
+  for (const span of spans) {
+    if (family) span.style.setProperty('font-family', family, 'important')
+    if (lineHeight) span.style.setProperty('line-height', lineHeight, 'important')
+    if (letterSpacing) span.style.setProperty('letter-spacing', letterSpacing, 'important')
   }
 }
 
 /**
  * Removes font styles previously applied by {@link applyFontStyles}.
- *
- * @param container The text layer DOM element.
  */
 export function removeFontStyles(container: HTMLElement): void {
   delete container.dataset.dyslexiaFontApplied
   container.style.removeProperty('font-family')
   container.style.removeProperty('line-height')
   container.style.removeProperty('letter-spacing')
+
+  const spans = container.querySelectorAll<HTMLSpanElement>('span')
+  for (const span of spans) {
+    span.style.removeProperty('font-family')
+    span.style.removeProperty('line-height')
+    span.style.removeProperty('letter-spacing')
+  }
 }

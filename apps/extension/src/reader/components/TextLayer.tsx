@@ -11,6 +11,8 @@ export interface TextLayerProps {
   className?: string
   /** Called after text content extraction completes. `true` if the page has text items. */
   onTextContentExtracted?: (hasText: boolean) => void
+  /** Called after the text layer DOM is fully built — safe point for feature (re)application. */
+  onReady?: () => void
 }
 
 /**
@@ -24,7 +26,7 @@ export interface TextLayerProps {
  * viewport so that the caller can stack it directly over a `<canvas>`
  * element.
  */
-export function TextLayer({ page, scale = 1.5, className, onTextContentExtracted }: TextLayerProps) {
+export function TextLayer({ page, scale = 1.5, className, onTextContentExtracted, onReady }: TextLayerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,6 +55,9 @@ export function TextLayer({ page, scale = 1.5, className, onTextContentExtracted
         // Notify parent whether text was found (for scanned PDF detection)
         const hasText = textContent.items.length > 0
         onTextContentExtracted?.(hasText)
+
+        // Notify parent that the text layer DOM is ready for feature application
+        onReady?.()
       } catch (err: unknown) {
         if (cancelled) return
         const message =

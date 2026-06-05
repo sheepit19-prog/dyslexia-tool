@@ -8,6 +8,8 @@ export interface PageCanvasProps {
   scale?: number
   /** Called after text content extraction. `true` if the page has text items. */
   onTextContentExtracted?: (hasText: boolean) => void
+  /** Called after the text layer DOM is fully built. */
+  onTextLayerReady?: () => void
 }
 
 /**
@@ -18,7 +20,7 @@ export interface PageCanvasProps {
  * displays.  A transparent-but-selectable `TextLayer` is stacked
  * on top so that reading features (U4) can operate on the text.
  */
-export function PageCanvas({ pdf, pageNumber, scale = 1.5, onTextContentExtracted }: PageCanvasProps) {
+export function PageCanvas({ pdf, pageNumber, scale = 1.5, onTextContentExtracted, onTextLayerReady }: PageCanvasProps) {
   const { canvasRef, page, rendering } = usePdfPage(pdf, pageNumber, scale)
 
   return (
@@ -31,7 +33,7 @@ export function PageCanvas({ pdf, pageNumber, scale = 1.5, onTextContentExtracte
           height: 'auto',
         }}
       />
-      <TextLayer page={page} scale={scale} onTextContentExtracted={onTextContentExtracted} />
+      <TextLayer page={page} scale={scale} onTextContentExtracted={onTextContentExtracted} onReady={onTextLayerReady} />
       {rendering && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-white/60"
