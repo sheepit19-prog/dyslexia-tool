@@ -11,8 +11,6 @@ vi.mock('../../shared/pdf/text-layer', () => ({
   buildTextLayer: (...args: unknown[]) => buildTextLayerMock(...args),
 }))
 
-import { buildTextLayer } from '../../shared/pdf/text-layer'
-
 /**
  * Create a minimal PDFPageProxy mock that returns predetermined
  * text content from `getTextContent()`.

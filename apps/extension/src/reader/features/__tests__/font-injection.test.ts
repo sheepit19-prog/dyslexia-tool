@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { applyFontStyles, removeFontStyles } from '../font-injection'
-import type { FontSettings } from '../font-injection'
 
 describe('reader font-injection', () => {
   let container: HTMLDivElement

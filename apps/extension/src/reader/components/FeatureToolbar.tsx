@@ -69,7 +69,6 @@ export function FeatureToolbar({
 
   // Clean up TTS state when utterance ends
   useEffect(() => {
-    const handleEnd = () => setTtsActive(false)
     const synth = window.speechSynthesis
 
     // Poll for ended state since onend can be unreliable in some browsers

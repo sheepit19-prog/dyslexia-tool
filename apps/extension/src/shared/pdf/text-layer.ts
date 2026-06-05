@@ -1,4 +1,17 @@
-import type { TextContent, TextItem, PageViewport } from 'pdfjs-dist'
+import type { PageViewport } from 'pdfjs-dist'
+
+interface TextItem {
+  str: string
+  dir?: string
+  width: number
+  height: number
+  transform: number[]
+  fontName: string
+}
+
+interface TextContent {
+  items: (TextItem | {})[]
+}
 
 /**
  * Build an invisible-but-selectable text layer from pdf.js text content.

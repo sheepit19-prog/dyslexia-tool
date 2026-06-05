@@ -62,7 +62,7 @@ export function App() {
   const rulerRef = useRef<HTMLElement | null>(null)
 
   // Load initial settings from Dexie
-  const { features: initialFeatures, loading: settingsLoading } = useInitialFeatureStates()
+  const { features: initialFeatures } = useInitialFeatureStates()
 
   const {
     pdf,

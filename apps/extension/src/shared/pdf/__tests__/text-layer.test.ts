@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { buildTextLayer } from '../text-layer'
-import type { TextContent, PageViewport } from 'pdfjs-dist'
+import type { PageViewport } from 'pdfjs-dist'
+
+interface TextContent {
+  items: Record<string, unknown>[]
+  styles?: Record<string, unknown>
+}
 
 /**
  * Create a minimal PageViewport mock whose `transform` maps
