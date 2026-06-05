@@ -1,13 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePdfDocument } from './hooks/usePdfDocument'
 import { PageCanvas } from './components/PageCanvas'
+import { FileDropZone } from './components/FileDropZone'
+import { PasswordDialog } from './components/PasswordDialog'
+
+/** Threshold (in bytes) above which a size warning is shown */
+const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100 MB
 
 export function App() {
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null)
   const [pdfName, setPdfName] = useState<string | null>(null)
+  const [password, setPassword] = useState<string | undefined>(undefined)
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const [passwordDialogError, setPasswordDialogError] = useState<string | null>(null)
+  const [showSizeWarning, setShowSizeWarning] = useState(false)
 
-  const { pdf, loading, error, currentPage, totalPages, setPage } =
-    usePdfDocument(pdfBuffer)
+  const {
+    pdf,
+    loading,
+    error,
+    passwordNeeded,
+    passwordWrong,
+    currentPage,
+    totalPages,
+    setPage,
+  } = usePdfDocument(pdfBuffer, password)
 
   // On mount, check for a pending PDF from the popup handoff
   useEffect(() => {
@@ -15,10 +32,19 @@ export function App() {
       try {
         const result = await chrome.storage.session.get('pdfBuffer')
         if (result.pdfBuffer) {
-          setPdfBuffer(result.pdfBuffer.buffer ?? result.pdfBuffer)
-          setPdfName(result.pdfName ?? null)
+          const buffer =
+            result.pdfBuffer.buffer ?? result.pdfBuffer
+          const name = result.pdfName ?? null
+
+          setPdfBuffer(buffer)
+          setPdfName(name)
           // Clear the session key so stale data doesn't persist
           await chrome.storage.session.remove('pdfBuffer')
+
+          // Check for large file warning
+          if (buffer.byteLength > LARGE_FILE_THRESHOLD) {
+            setShowSizeWarning(true)
+          }
         }
       } catch {
         // session storage unavailable or empty — that's fine
@@ -27,9 +53,55 @@ export function App() {
     checkPendingPdf()
   }, [])
 
+  // When passwordNeeded / passwordWrong changes, show/hide dialog
+  useEffect(() => {
+    if (passwordNeeded) {
+      setShowPasswordDialog(true)
+      if (passwordWrong) {
+        setPasswordDialogError('Incorrect password. Please try again.')
+      } else {
+        setPasswordDialogError(null)
+      }
+    } else {
+      setShowPasswordDialog(false)
+      setPasswordDialogError(null)
+    }
+  }, [passwordNeeded, passwordWrong])
+
   const handleFileDrop = useCallback((buffer: ArrayBuffer, name: string) => {
+    // Reset password state for new files
+    setPassword(undefined)
+    setShowPasswordDialog(false)
+    setPasswordDialogError(null)
+
+    // Size warning for large files
+    if (buffer.byteLength > LARGE_FILE_THRESHOLD) {
+      setShowSizeWarning(true)
+    } else {
+      setShowSizeWarning(false)
+    }
+
     setPdfBuffer(buffer)
     setPdfName(name)
+  }, [])
+
+  const handlePasswordSubmit = useCallback(
+    (enteredPassword: string) => {
+      // Clear previous errors and set password to trigger re-load
+      setPasswordDialogError(null)
+      setPassword(enteredPassword)
+    },
+    [],
+  )
+
+  const handlePasswordCancel = useCallback(() => {
+    // Clear password state and return to idle
+    setPassword(undefined)
+    setShowPasswordDialog(false)
+    setPasswordDialogError(null)
+    // Clear buffer so user can try a different file
+    setPdfBuffer(null)
+    setPdfName(null)
   }, [])
 
   const handlePrev = useCallback(() => {
@@ -52,9 +124,10 @@ export function App() {
     [setPage],
   )
 
+  // Determine display state: if password needed and dialog showing, still treat as loading
   const state = pdf
     ? 'ready'
-    : loading
+    : loading || passwordNeeded
       ? 'loading'
       : error
         ? 'error'
@@ -104,41 +177,20 @@ export function App() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center p-4">
+        {showSizeWarning && (
+          <div
+            className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-4 py-2 mb-4 max-w-md w-full text-center"
+            data-testid="size-warning"
+          >
+            <p className="text-yellow-700 dark:text-yellow-300 text-sm">
+              Large file — may take a moment to load
+            </p>
+          </div>
+        )}
+
         {state === 'idle' && (
           <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400">
-            <div
-              className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 max-w-md w-full"
-              onDragOver={(e) => {
-                e.preventDefault()
-                e.currentTarget.classList.add('border-blue-400', 'bg-blue-50')
-              }}
-              onDragLeave={(e) => {
-                e.currentTarget.classList.remove(
-                  'border-blue-400',
-                  'bg-blue-50',
-                )
-              }}
-              onDrop={(e) => {
-                e.preventDefault()
-                e.currentTarget.classList.remove(
-                  'border-blue-400',
-                  'bg-blue-50',
-                )
-                const file = e.dataTransfer.files?.[0]
-                if (file && file.type === 'application/pdf') {
-                  const reader = new FileReader()
-                  reader.onload = (ev) => {
-                    const buffer = ev.target?.result as ArrayBuffer
-                    handleFileDrop(buffer, file.name)
-                  }
-                  reader.readAsArrayBuffer(file)
-                }
-              }}
-            >
-              <h2 className="text-2xl font-bold mb-2">PDF Reader</h2>
-              <p className="mb-1">Drag and drop a PDF here</p>
-              <p className="text-sm opacity-70">or open one from the extension popup</p>
-            </div>
+            <FileDropZone onPdfLoaded={handleFileDrop} />
           </div>
         )}
 
@@ -166,6 +218,14 @@ export function App() {
           </div>
         )}
       </main>
+
+      {/* Password Dialog */}
+      <PasswordDialog
+        isOpen={showPasswordDialog}
+        error={passwordDialogError}
+        onSubmit={handlePasswordSubmit}
+        onCancel={handlePasswordCancel}
+      />
     </div>
   )
 }

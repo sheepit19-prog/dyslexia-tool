@@ -18,6 +18,7 @@ const chromeMock = {
   tabs: {
     query: vi.fn(),
     sendMessage: vi.fn(),
+    create: vi.fn(),
   },
   storage: {
     local: {

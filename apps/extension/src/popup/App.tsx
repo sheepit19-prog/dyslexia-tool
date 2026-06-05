@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Settings } from '../shared/types/storage'
 import { sendTabMessage } from '../shared/types/messages'
 import { Onboarding } from './Onboarding'
@@ -37,6 +37,7 @@ export function App() {
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const popupStart = performance.now()
@@ -228,6 +229,49 @@ export function App() {
     }
   }
 
+  const handleOpenPdf = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      try {
+        const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as ArrayBuffer)
+          reader.onerror = () =>
+            reject(new Error('Failed to read file'))
+          reader.readAsArrayBuffer(file)
+        })
+
+        // Store the PDF buffer and name in session storage for the reader page
+        await chrome.storage.session.set({
+          pdfBuffer: buffer,
+          pdfName: file.name,
+        })
+
+        // Open reader page in a new tab
+        const readerUrl = chrome.runtime.getURL('reader/index.html')
+        await chrome.tabs.create({ url: readerUrl })
+      } catch (err) {
+        console.error('[Popup] Failed to open PDF:', err)
+        alert(
+          'Failed to open PDF: ' +
+            (err instanceof Error ? err.message : 'Unknown error'),
+        )
+      }
+
+      // Reset input so the same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [],
+  )
+
   if (loading) {
     return (
       <div style={{ width: '400px', padding: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -299,6 +343,28 @@ export function App() {
           <button onClick={() => toggleReadingRuler(!readingRulerEnabled)} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: readingRulerEnabled ? '#10B981' : '#D1D5DB' }}>
             <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: readingRulerEnabled ? '28px' : '4px' }} />
           </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
+          <div>
+            <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Open PDF</p>
+            <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Read a PDF with dyslexia tools</p>
+          </div>
+          <button
+            onClick={handleOpenPdf}
+            style={{ padding: '8px 16px', backgroundColor: '#8B5CF6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+            aria-label="Open PDF file"
+          >
+            Open PDF
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            onChange={handleFileSelected}
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
