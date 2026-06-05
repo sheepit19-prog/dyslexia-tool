@@ -50,12 +50,12 @@ describe('reader bionic-reading', () => {
     expect(spans[1].innerHTML).toBe('<b>jum</b>ps <b>ov</b>er <b>th</b>e <b>la</b>zy <b>do</b>g')
   })
 
-  it('makes spans visible by setting color to inherit', () => {
+  it('makes spans visible by setting explicit color', () => {
     applyBionicToLayer(container)
 
     const spans = container.querySelectorAll<HTMLSpanElement>('span')
     for (const span of spans) {
-      expect(span.style.color).toContain('inherit')
+      expect(span.style.color).toBe('rgb(0, 0, 0)')
     }
   })
 
@@ -136,7 +136,7 @@ describe('reader bionic-reading', () => {
 
     const span = short.querySelector<HTMLSpanElement>('span')!
     expect(span.textContent).toBe('a b c')
-    expect(span.style.color).toContain('inherit')
+    expect(span.style.color).toBe('rgb(0, 0, 0)')
     expect(span.dataset.dyslexiaBionicApplied).toBe('true')
   })
 

@@ -4,40 +4,68 @@ export interface FontSettings {
   letterSpacing: number
 }
 
+let fontFaceLoaded = false
+
+/**
+ * Injects @font-face declarations for OpenDyslexic into the reader page.
+ * Must be called once before font-family changes take effect.
+ */
+function ensureFontFaceLoaded(): void {
+  if (fontFaceLoaded) return
+  fontFaceLoaded = true
+
+  const style = document.createElement('style')
+  style.id = 'dyslexia-tool-font-face'
+  style.textContent = `
+    @font-face {
+      font-family: 'OpenDyslexic';
+      src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Regular.woff2')}') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'OpenDyslexic';
+      src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Bold.woff2')}') format('woff2');
+      font-weight: bold;
+      font-style: normal;
+      font-display: swap;
+    }
+  `
+  document.head.appendChild(style)
+}
+
 /**
  * Applies user-configured font family and spacing CSS to a text layer
  * container element AND all its child spans.
- *
- * The text layer spans have inline font-family, font-size, and line-height
- * that would otherwise block container-level cascading.
  */
 export function applyFontStyles(
   container: HTMLElement,
   settings: FontSettings,
 ): void {
+  ensureFontFaceLoaded()
+
   container.dataset.dyslexiaFontApplied = 'true'
 
   const family = settings.fontFamily && settings.fontFamily !== 'system'
     ? settings.fontFamily
     : null
-  const lineHeight = settings.lineSpacing
-    ? String(settings.lineSpacing)
-    : null
-  const letterSpacing = settings.letterSpacing !== undefined
-    ? `${settings.letterSpacing}em`
-    : null
 
-  // Apply to container (for any spans that don't have inline overrides)
+  // Apply to container
   if (family) container.style.setProperty('font-family', family, 'important')
-  if (lineHeight) container.style.setProperty('line-height', lineHeight, 'important')
-  if (letterSpacing) container.style.setProperty('letter-spacing', letterSpacing, 'important')
 
-  // Override inline styles on each span so cascading actually works
+  // Override inline styles on each span
   const spans = container.querySelectorAll<HTMLSpanElement>('span')
   for (const span of spans) {
     if (family) span.style.setProperty('font-family', family, 'important')
-    if (lineHeight) span.style.setProperty('line-height', lineHeight, 'important')
-    if (letterSpacing) span.style.setProperty('letter-spacing', letterSpacing, 'important')
+  }
+
+  // Spacing applies to container only (spans have per-word positioning)
+  if (settings.lineSpacing) {
+    container.style.setProperty('line-height', String(settings.lineSpacing), 'important')
+  }
+  if (settings.letterSpacing !== undefined) {
+    container.style.setProperty('letter-spacing', `${settings.letterSpacing}em`, 'important')
   }
 }
 
@@ -53,7 +81,5 @@ export function removeFontStyles(container: HTMLElement): void {
   const spans = container.querySelectorAll<HTMLSpanElement>('span')
   for (const span of spans) {
     span.style.removeProperty('font-family')
-    span.style.removeProperty('line-height')
-    span.style.removeProperty('letter-spacing')
   }
 }
