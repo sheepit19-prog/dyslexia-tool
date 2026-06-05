@@ -1,5 +1,3 @@
-import { applyBionicReading } from '../shared/text/bionic-reading'
-
 const DATA_ATTR = 'data-dyslexia-bionic'
 const BOLD_RATIO_DEFAULT = 0.45
 const MAX_TEXT_LENGTH = 3000
@@ -48,13 +46,19 @@ function processTextNode(textNode: Text): void {
   if (isBoldParent(textNode.parentElement)) return
 
   const text = textNode.textContent!
-  const converted = applyBionicReading(text, boldRatio)
-  if (converted === text) return
+  // Using inline spans with explicit font-weight for maximum site compatibility.
+  // Inline styles resist site CSS overrides that can suppress <b> tag defaults.
+  const html = text.replace(/\S+/g, (word) => {
+    if (word.length < 3) return word
+    const splitAt = Math.max(1, Math.ceil(word.length * boldRatio))
+    return `<span ${DATA_ATTR}="b" style="font-weight:700">${word.slice(0, splitAt)}</span><span ${DATA_ATTR}="r" style="font-weight:inherit">${word.slice(splitAt)}</span>`
+  })
+  if (html === text) return
 
   const container = document.createElement('span')
   container.setAttribute(DATA_ATTR, 'c')
   container.setAttribute('data-orig', text)
-  container.innerHTML = converted
+  container.innerHTML = html
   textNode.parentNode.replaceChild(container, textNode)
 }
 
