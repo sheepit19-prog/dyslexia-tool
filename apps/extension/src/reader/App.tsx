@@ -1,11 +1,46 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePdfDocument } from './hooks/usePdfDocument'
 import { PageCanvas } from './components/PageCanvas'
+import { PageNavigation } from './components/PageNavigation'
+import { FeatureToolbar, useInitialFeatureStates } from './components/FeatureToolbar'
 import { FileDropZone } from './components/FileDropZone'
+import { ErrorBanner } from './components/ErrorBanner'
 import { PasswordDialog } from './components/PasswordDialog'
+import type { ErrorType } from './components/ErrorBanner'
+
+import { applyFontStyles, removeFontStyles } from './features/font-injection'
+import { applyBionicToLayer, removeBionicFromLayer } from './features/bionic-reading'
+import { createRuler, destroyRuler } from './features/reading-ruler'
 
 /** Threshold (in bytes) above which a size warning is shown */
 const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100 MB
+
+/**
+ * Applies the dark mode CSS class to the document root based on settings
+ * and system preference.
+ */
+function applyDarkMode(theme: 'light' | 'dark' | 'system'): void {
+  const root = document.documentElement
+  if (theme === 'dark') {
+    root.classList.add('dark')
+  } else if (theme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  } else {
+    root.classList.remove('dark')
+  }
+}
+
+/**
+ * Returns the text layer container element in the DOM, or null.
+ */
+function getTextLayerContainer(): HTMLElement | null {
+  return document.querySelector('.text-layer') as HTMLElement | null
+}
 
 export function App() {
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null)
@@ -14,6 +49,20 @@ export function App() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [passwordDialogError, setPasswordDialogError] = useState<string | null>(null)
   const [showSizeWarning, setShowSizeWarning] = useState(false)
+  const [hasTextContent, setHasTextContent] = useState<boolean | null>(null)
+  const [dismissedError, setDismissedError] = useState<ErrorType | null>(null)
+  const [featureEnabled, setFeatureEnabled] = useState({
+    font: false,
+    bionic: false,
+    tts: false,
+    ruler: false,
+  })
+
+  // Refs for feature state cleanup
+  const rulerRef = useRef<HTMLElement | null>(null)
+
+  // Load initial settings from Dexie
+  const { features: initialFeatures, loading: settingsLoading } = useInitialFeatureStates()
 
   const {
     pdf,
@@ -25,6 +74,32 @@ export function App() {
     totalPages,
     setPage,
   } = usePdfDocument(pdfBuffer, password)
+
+  // Apply dark mode on mount and when theme setting loads
+  useEffect(() => {
+    if (initialFeatures?.theme) {
+      applyDarkMode(initialFeatures.theme)
+
+      // Listen for system theme changes if in 'system' mode
+      if (initialFeatures.theme === 'system') {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)')
+        const handler = () => applyDarkMode('system')
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+      }
+    }
+  }, [initialFeatures?.theme])
+
+  // Initialize feature states from settings
+  useEffect(() => {
+    if (initialFeatures) {
+      setFeatureEnabled(prev => ({
+        ...prev,
+        font: initialFeatures.fontEnabled,
+        bionic: initialFeatures.bionicEnabled,
+      }))
+    }
+  }, [initialFeatures])
 
   // On mount, check for a pending PDF from the popup handoff
   useEffect(() => {
@@ -68,6 +143,83 @@ export function App() {
     }
   }, [passwordNeeded, passwordWrong])
 
+  // Reset text content detection when PDF buffer changes
+  useEffect(() => {
+    setHasTextContent(null)
+    setDismissedError(null)
+    setFeatureEnabled({ font: false, bionic: false, tts: false, ruler: false })
+  }, [pdfBuffer])
+
+  // Apply/remove features when enabled state changes and text layer exists
+  useEffect(() => {
+    const container = getTextLayerContainer()
+    if (!container) return
+
+    if (featureEnabled.font) {
+      const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
+      applyFontStyles(container, {
+        fontFamily,
+        lineSpacing: 1.6,
+        letterSpacing: 0.05,
+      })
+    } else {
+      removeFontStyles(container)
+    }
+  }, [featureEnabled.font, initialFeatures?.fontFamily])
+
+  useEffect(() => {
+    const container = getTextLayerContainer()
+    if (!container) return
+
+    if (featureEnabled.bionic) {
+      applyBionicToLayer(container)
+    } else {
+      removeBionicFromLayer(container)
+    }
+  }, [featureEnabled.bionic])
+
+  useEffect(() => {
+    if (featureEnabled.ruler) {
+      if (!rulerRef.current) {
+        rulerRef.current = createRuler()
+      }
+    } else {
+      if (rulerRef.current) {
+        destroyRuler(rulerRef.current)
+        rulerRef.current = null
+      }
+    }
+  }, [featureEnabled.ruler])
+
+  // Re-apply features when page changes
+  useEffect(() => {
+    // Small delay to let TextLayer render before applying features
+    const timer = setTimeout(() => {
+      const container = getTextLayerContainer()
+      if (!container) return
+
+      if (featureEnabled.font) {
+        const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
+        applyFontStyles(container, { fontFamily, lineSpacing: 1.6, letterSpacing: 0.05 })
+      }
+      if (featureEnabled.bionic) {
+        applyBionicToLayer(container)
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [currentPage])
+
+  // Clean up ruler on unmount
+  useEffect(() => {
+    return () => {
+      if (rulerRef.current) {
+        destroyRuler(rulerRef.current)
+        rulerRef.current = null
+      }
+    }
+  }, [])
+
   const handleFileDrop = useCallback((buffer: ArrayBuffer, name: string) => {
     // Reset password state for new files
     setPassword(undefined)
@@ -87,7 +239,6 @@ export function App() {
 
   const handlePasswordSubmit = useCallback(
     (enteredPassword: string) => {
-      // Clear previous errors and set password to trigger re-load
       setPasswordDialogError(null)
       setPassword(enteredPassword)
     },
@@ -95,36 +246,29 @@ export function App() {
   )
 
   const handlePasswordCancel = useCallback(() => {
-    // Clear password state and return to idle
     setPassword(undefined)
     setShowPasswordDialog(false)
     setPasswordDialogError(null)
-    // Clear buffer so user can try a different file
     setPdfBuffer(null)
     setPdfName(null)
   }, [])
 
-  const handlePrev = useCallback(() => {
-    setPage(currentPage - 1)
-  }, [currentPage, setPage])
+  const handleTextContentExtracted = useCallback((hasText: boolean) => {
+    setHasTextContent(hasText)
+  }, [])
 
-  const handleNext = useCallback(() => {
-    setPage(currentPage + 1)
-  }, [currentPage, setPage])
-
-  const handlePageInput = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const val = parseInt((e.target as HTMLInputElement).value, 10)
-        if (!isNaN(val)) {
-          setPage(val)
-        }
-      }
+  const handleFeatureToggle = useCallback(
+    (feature: 'font' | 'bionic' | 'tts' | 'ruler', enabled: boolean) => {
+      setFeatureEnabled(prev => ({ ...prev, [feature]: enabled }))
     },
-    [setPage],
+    [],
   )
 
-  // Determine display state: if password needed and dialog showing, still treat as loading
+  const handleErrorDismiss = useCallback(() => {
+    setDismissedError('scanned')
+  }, [])
+
+  // Determine display state
   const state = pdf
     ? 'ready'
     : loading || passwordNeeded
@@ -133,45 +277,42 @@ export function App() {
         ? 'error'
         : 'idle'
 
+  // Determine if features are applicable (not scanned PDF)
+  const featuresApplicable = hasTextContent !== false
+
+  // Determine if we show the scanned error banner
+  const showScannedBanner = state === 'ready' && hasTextContent === false && dismissedError !== 'scanned'
+
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
-      {/* Toolbar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-          {pdfName ?? 'PDF Reader'}
-        </h1>
+      {/* Toolbar / Header */}
+      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+            {pdfName ?? 'PDF Reader'}
+          </h1>
+        </div>
+
         {state === 'ready' && totalPages > 0 && (
-          <div className="flex items-center gap-2 text-sm">
-            <button
-              onClick={handlePrev}
-              disabled={currentPage <= 1}
-              className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 disabled:opacity-40 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              aria-label="Previous page"
-            >
-              ‹ Prev
-            </button>
-            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-              <input
-                type="number"
-                defaultValue={currentPage}
-                key={currentPage}
-                onKeyDown={handlePageInput}
-                className="w-12 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm px-1 py-0.5"
-                min={1}
-                max={totalPages}
-                aria-label="Page number"
-              />
-              <span className="whitespace-nowrap">/ {totalPages}</span>
-            </span>
-            <button
-              onClick={handleNext}
-              disabled={currentPage >= totalPages}
-              className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 disabled:opacity-40 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              aria-label="Next page"
-            >
-              Next ›
-            </button>
-          </div>
+          <PageNavigation
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        )}
+
+        {state === 'ready' && featuresApplicable && (
+          <FeatureToolbar
+            features={{
+              font: { enabled: featureEnabled.font, label: 'Font', activeColor: 'bg-blue-500' },
+              bionic: { enabled: featureEnabled.bionic, label: 'Bionic', activeColor: 'bg-amber-500' },
+              tts: { enabled: featureEnabled.tts, label: 'TTS', activeColor: 'bg-green-500' },
+              ruler: { enabled: featureEnabled.ruler, label: 'Ruler', activeColor: 'bg-purple-500' },
+            }}
+            onFeatureToggle={handleFeatureToggle}
+            fontFamily={initialFeatures?.fontFamily}
+            ttsSpeed={initialFeatures?.ttsSpeed}
+          />
         )}
       </header>
 
@@ -186,6 +327,10 @@ export function App() {
               Large file — may take a moment to load
             </p>
           </div>
+        )}
+
+        {showScannedBanner && (
+          <ErrorBanner type="scanned" onDismiss={handleErrorDismiss} />
         )}
 
         {state === 'idle' && (
@@ -203,18 +348,20 @@ export function App() {
 
         {state === 'error' && (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md text-center">
-              <p className="text-red-700 dark:text-red-300 font-medium mb-2">
-                Failed to load PDF
-              </p>
-              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-            </div>
+            <ErrorBanner
+              type={error?.includes('corrupt') || error?.includes('Invalid') ? 'corrupt' : 'load-failed'}
+              detail={error ?? undefined}
+            />
           </div>
         )}
 
         {state === 'ready' && pdf && (
           <div className="flex-1 flex items-start justify-center py-4">
-            <PageCanvas pdf={pdf} pageNumber={currentPage} />
+            <PageCanvas
+              pdf={pdf}
+              pageNumber={currentPage}
+              onTextContentExtracted={handleTextContentExtracted}
+            />
           </div>
         )}
       </main>

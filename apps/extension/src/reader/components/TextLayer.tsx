@@ -9,6 +9,8 @@ export interface TextLayerProps {
   scale?: number
   /** Additional CSS class names applied to the container. */
   className?: string
+  /** Called after text content extraction completes. `true` if the page has text items. */
+  onTextContentExtracted?: (hasText: boolean) => void
 }
 
 /**
@@ -22,7 +24,7 @@ export interface TextLayerProps {
  * viewport so that the caller can stack it directly over a `<canvas>`
  * element.
  */
-export function TextLayer({ page, scale = 1.5, className }: TextLayerProps) {
+export function TextLayer({ page, scale = 1.5, className, onTextContentExtracted }: TextLayerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,6 +49,10 @@ export function TextLayer({ page, scale = 1.5, className }: TextLayerProps) {
         if (!container) return
 
         buildTextLayer(textContent, viewport, container)
+
+        // Notify parent whether text was found (for scanned PDF detection)
+        const hasText = textContent.items.length > 0
+        onTextContentExtracted?.(hasText)
       } catch (err: unknown) {
         if (cancelled) return
         const message =
