@@ -38,9 +38,12 @@
     }
   ],
   "options_page": "options/index.html",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; object-src 'self'"
+  },
   "web_accessible_resources": [
     {
-      "resources": ["fonts/*", "icons/*"],
+      "resources": ["fonts/*", "icons/*", "workers/*"],
       "matches": ["<all_urls>"]
     }
   ],

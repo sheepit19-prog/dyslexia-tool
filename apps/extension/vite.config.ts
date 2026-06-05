@@ -23,6 +23,7 @@ export default defineConfig({
       input: {
         popup: 'popup/index.html',
         options: 'options/index.html',
+        reader: 'reader/index.html',
       },
     },
   },
