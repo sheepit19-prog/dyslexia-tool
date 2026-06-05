@@ -13,6 +13,7 @@ const chromeMock = {
     onStartup: {
       addListener: vi.fn(),
     },
+    getURL: vi.fn((path: string) => `chrome-extension://test-id/${path}`),
   },
   tabs: {
     query: vi.fn(),
@@ -22,6 +23,11 @@ const chromeMock = {
     local: {
       get: vi.fn(),
       set: vi.fn(),
+    },
+    session: {
+      get: vi.fn(),
+      set: vi.fn(),
+      remove: vi.fn(),
     },
   },
   alarms: {
