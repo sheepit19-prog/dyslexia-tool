@@ -1,5 +1,6 @@
 import { type PDFDocumentProxy } from 'pdfjs-dist'
 import { usePdfPage } from '../hooks/usePdfPage'
+import { TextLayer } from './TextLayer'
 
 export interface PageCanvasProps {
   pdf: PDFDocumentProxy | null
@@ -12,10 +13,11 @@ export interface PageCanvasProps {
  *
  * Wraps the `usePdfPage` hook and handles the canvas element setup
  * with device-pixel-ratio scaling for sharp rendering on high-DPI
- * displays.
+ * displays.  A transparent-but-selectable `TextLayer` is stacked
+ * on top so that reading features (U4) can operate on the text.
  */
 export function PageCanvas({ pdf, pageNumber, scale = 1.5 }: PageCanvasProps) {
-  const { canvasRef, rendering } = usePdfPage(pdf, pageNumber, scale)
+  const { canvasRef, page, rendering } = usePdfPage(pdf, pageNumber, scale)
 
   return (
     <div className="relative inline-block">
@@ -27,6 +29,7 @@ export function PageCanvas({ pdf, pageNumber, scale = 1.5 }: PageCanvasProps) {
           height: 'auto',
         }}
       />
+      <TextLayer page={page} scale={scale} />
       {rendering && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-white/60"
