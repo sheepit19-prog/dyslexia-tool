@@ -46,6 +46,7 @@ function getOverrides(preference: SitePreference): OverrideDisplay[] {
 }
 
 const FONT_OPTIONS = [
+  { value: 'Helvetica', label: 'Helvetica' },
   { value: 'OpenDyslexic', label: 'OpenDyslexic' },
   { value: 'Arial', label: 'Arial' },
   { value: 'Verdana', label: 'Verdana' },

@@ -5,7 +5,7 @@
 export interface Settings {
   id: 'global'
   fontEnabled: boolean
-  fontFamily: 'OpenDyslexic' | 'Arial' | 'Verdana' | 'system'
+  fontFamily: 'Helvetica' | 'OpenDyslexic' | 'Arial' | 'Verdana' | 'system'
   lineSpacing: number // 1.0 - 2.0
   letterSpacing: number // 0 - 0.1em
   bionicReadingEnabled: boolean

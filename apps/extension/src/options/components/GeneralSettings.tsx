@@ -9,6 +9,7 @@ import { Select } from './ui/Select'
 import { Slider } from './ui/Slider'
 
 const FONT_FAMILY_OPTIONS = [
+  { value: 'Helvetica', label: 'Helvetica' },
   { value: 'OpenDyslexic', label: 'OpenDyslexic' },
   { value: 'Arial', label: 'Arial' },
   { value: 'Verdana', label: 'Verdana' },

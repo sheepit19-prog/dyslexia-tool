@@ -9,7 +9,7 @@ import { getNotes as dbGetNotes, addNote as dbAddNote, deleteNote as dbDeleteNot
 const DEFAULT_SETTINGS: Settings = {
   id: 'global',
   fontEnabled: false,
-  fontFamily: 'OpenDyslexic',
+  fontFamily: 'Helvetica',
   lineSpacing: 1.6,
   letterSpacing: 0.05,
   bionicReadingEnabled: false,

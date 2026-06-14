@@ -60,7 +60,7 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   const updated: Settings = {
     id: 'global',
     fontEnabled: false,
-    fontFamily: 'OpenDyslexic',
+    fontFamily: 'Helvetica',
     lineSpacing: 1.6,
     letterSpacing: 0.05,
     bionicReadingEnabled: false,
@@ -200,7 +200,7 @@ function getDefaultSettings(): Settings {
   return {
     id: 'global',
     fontEnabled: false,
-    fontFamily: 'OpenDyslexic',
+    fontFamily: 'Helvetica',
     lineSpacing: 1.6,
     letterSpacing: 0.05,
     bionicReadingEnabled: false,

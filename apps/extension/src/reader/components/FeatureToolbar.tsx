@@ -179,7 +179,7 @@ export function useInitialFeatureStates() {
           setFeatures({
             fontEnabled: false,
             bionicEnabled: false,
-            fontFamily: 'OpenDyslexic',
+            fontFamily: 'Helvetica',
             ttsSpeed: 1.0,
             theme: 'light',
           })
@@ -188,7 +188,7 @@ export function useInitialFeatureStates() {
         setFeatures({
           fontEnabled: false,
           bionicEnabled: false,
-          fontFamily: 'OpenDyslexic',
+          fontFamily: 'Helvetica',
           ttsSpeed: 1.0,
           theme: 'light',
         })

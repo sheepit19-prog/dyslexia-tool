@@ -273,7 +273,7 @@ export function App() {
               <ReadingView
                 pdf={pdf}
                 pageNumber={currentPage}
-                fontFamily={fontEnabled ? (initialFeatures?.fontFamily ?? 'OpenDyslexic') : undefined}
+                fontFamily={fontEnabled ? (initialFeatures?.fontFamily ?? 'Helvetica') : undefined}
                 fontSize={readingFontSize}
                 lineSpacing={fontEnabled ? 1.6 : 1.5}
                 letterSpacing={fontEnabled ? 0.05 : 0}
