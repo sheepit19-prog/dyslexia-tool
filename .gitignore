@@ -1,3 +1,6 @@
+# Dependencies
+node_modules/
+
 # Agent/config directories
 .agent/
 .claude/
@@ -32,6 +35,9 @@ wikipedia-before-font.png
 dist/
 apps/extension/dist/
 
+# Generated PDF.js worker (recreated on install by scripts/copy-pdf-worker.js)
+apps/extension/public/workers/
+
 # Test results
 test-results/
 
@@ -52,7 +58,7 @@ test-results/
 /apps/extension/docs/STORE_LISTING.md
 /apps/extension/docs/screenshots/
 
-# Dev utility scripts
+# Dev utility scripts (copy-pdf-worker.js is force-tracked for build-from-clone)
 /apps/extension/scripts/
 
 # Alternate manifests
@@ -64,3 +70,11 @@ manifest.publish.json
 
 # Accidental nested copies
 apps/extension/apps/
+
+# Standalone DysSpell app — removed from this repo, kept locally
+dysspell/
+
+# Internal planning & strategy docs (not published)
+docs/brainstorms/
+docs/plans/
+docs/strategy/

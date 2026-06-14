@@ -1,66 +1,85 @@
 # Dyslexia Tool
 
-Free Chrome extension for dyslexia reading and writing assistance — customizable fonts, bionic reading, text-to-speech, reading ruler, spell checking, and voice notes. Works on any website.
+A free, privacy-first Chrome extension for dyslexia reading and writing assistance. Customizable fonts, bionic reading, text-to-speech, a reading ruler, spell checking, voice notes — and a built-in **PDF reader** that applies the same reading aids to local PDFs. Everything runs locally in the browser; no data ever leaves your device.
+
+> Available on the [Chrome Web Store](https://chromewebstore.google.com/detail/hkingdeoobbaddphljhgolilcdlfhkfe).
 
 ## Features
 
 | Feature | Description | Shortcut |
 |---|---|---|
 | **Dyslexia-Friendly Fonts** | Switch to OpenDyslexic, Arial, or Verdana with adjustable letter/line spacing | `Ctrl+Shift+F` |
-| **Bionic Reading** | Bold first syllables to guide eye movement and improve reading speed | `Ctrl+Shift+B` |
-| **Read Aloud (TTS)** | Text-to-speech with adjustable speed (0.5x–2.0x) | `Ctrl+Shift+R` |
-| **Reading Ruler** | Highlight the line you're reading to reduce visual clutter | `Ctrl+Shift+L` |
+| **Bionic Reading** | Bold the leading part of each word to guide eye movement | `Ctrl+Shift+B` |
+| **Read Aloud (TTS)** | Text-to-speech with adjustable speed (0.5×–2.0×) | `Ctrl+Shift+R` |
+| **Reading Ruler** | Highlight the current line to reduce visual clutter | `Ctrl+Shift+L` |
+| **PDF Reader** | Open local PDFs and apply the reading aids via a clean reflowed reading mode | — |
 | **Spell Checking** | Real-time spelling suggestions while typing on any page | — |
-| **Voice Notes** | Record, transcribe, and tag audio notes (IndexedDB storage) | — |
-| **Site Preferences** | Per-website settings override global defaults | — |
+| **Voice Notes** | Record and store audio notes locally (IndexedDB) | — |
+| **Site Preferences** | Per-website settings that override global defaults | — |
 | **Dark Mode** | Light, dark, and system-following themes | — |
+
+## PDF Reader
+
+Open a PDF from the popup ("Open PDF") or drag-and-drop one onto the reader page. When you enable a text feature (font or bionic), the page switches to **reading mode**: the PDF's text is extracted and reflowed into a clean single column where the dyslexia font, spacing, and bionic reading render correctly. Text size is adjustable (A−/A+) and remembered. The original page view stays the default and is used as a fallback for scanned/image-only PDFs. All parsing happens locally with [pdf.js](https://mozilla.github.io/pdf.js/).
 
 ## How It Works
 
-The extension injects into any web page and applies real-time transformations to text rendering. No data leaves your browser — all processing is local. Voice notes are saved to IndexedDB and never transmitted.
+The extension injects into web pages and applies real-time transformations to text rendering; the PDF reader is a standalone extension page. No data leaves your browser — all processing is local, and voice notes are stored only in IndexedDB.
 
-## Usage
+## Installation
 
-1. Click the extension icon to open the quick-toggle popup
-2. Right-click the icon → **Options** for full settings
-3. Use keyboard shortcuts for fast toggles
-4. Right-click selected text → **Read Aloud**
+### Chrome Web Store
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/hkingdeoobbaddphljhgolilcdlfhkfe).
+
+### From source (developer mode)
+```bash
+cd apps/extension
+npm install        # postinstall copies the pdf.js worker into public/workers
+npm run build      # output in apps/extension/dist
+```
+Then open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select `apps/extension/dist`.
 
 ## Development
 
 ```bash
 cd apps/extension
 
-# Install dependencies
-npm install
+npm install        # install deps (also copies the pdf.js worker)
+npm run dev        # dev server with hot reload
+npm test           # unit tests (Vitest)
+npm run test:e2e   # end-to-end tests (Playwright)
+npm run build      # production build → dist/
+```
 
-# Start dev server with hot reload
-npm run dev
+## Project Structure
 
-# Run tests
-npm test
-
-# Run E2E tests
-npm run test:e2e
-
-# Build for production
-npm run build
+```
+apps/extension/
+├── manifest.json          # Manifest V3
+├── popup/ · options/ · reader/   # HTML entry points
+├── public/workers/        # pdf.js worker (generated on install)
+└── src/
+    ├── background/        # service worker
+    ├── content/          # content scripts (font, bionic, TTS, ruler, spelling)
+    ├── popup/ · options/  # extension UIs
+    ├── reader/           # PDF reader page (canvas + reading-mode reflow)
+    └── shared/           # shared types and pure utilities
 ```
 
 ## Tech Stack
 
-- **React 19** + **TypeScript**
+- **React 19** + **TypeScript** (strict)
 - **Vite 7** with `@crxjs/vite-plugin`
 - **Tailwind CSS 4**
-- **Zustand** for state management
-- **Dexie.js** for IndexedDB (voice notes, preferences)
+- **Zustand** (state) · **Dexie.js** (IndexedDB)
+- **pdf.js** for PDF rendering and text extraction
 - **Chrome Extension Manifest V3**
 - **Vitest** + **Playwright** for testing
 
 ## Privacy
 
-This extension processes all data locally on your device. It does not collect, transmit, or sell any personal information. Text from web pages is transformed in-browser and never sent anywhere. See [Privacy Policy](apps/extension/docs/PRIVACY_POLICY.md).
+All processing happens locally on your device. Nothing is collected, transmitted, or sold. See the [Privacy Policy](apps/extension/docs/PRIVACY_POLICY.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
