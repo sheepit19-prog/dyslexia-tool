@@ -4,24 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dyslexia Tool — PDF Reader</title>
-    <!-- Prevent flash of light theme before React mounts -->
-    <script>
-      (function () {
-        try {
-          var theme = localStorage.getItem('dyslexia-theme')
-          if (!theme) {
-            // Try IndexedDB-backed settings first via a sync read from chrome.storage
-            // Fall back to system preference
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light'
-          }
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark')
-          }
-        } catch (_) {}
-      })()
-    </script>
+    <!-- Theme is applied in main.tsx before render (MV3 CSP forbids inline scripts). -->
   </head>
   <body class="bg-white dark:bg-gray-900">
     <div id="root"></div>
