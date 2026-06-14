@@ -10,7 +10,7 @@ let fontFaceLoaded = false
  * Injects @font-face declarations for OpenDyslexic into the reader page.
  * Must be called once before font-family changes take effect.
  */
-function ensureFontFaceLoaded(): void {
+export function ensureFontFaceLoaded(): void {
   if (fontFaceLoaded) return
   fontFaceLoaded = true
 

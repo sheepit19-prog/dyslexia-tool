@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Settings } from '../shared/types/storage'
 import { sendTabMessage } from '../shared/types/messages'
+import { arrayBufferToBase64 } from '../shared/encoding'
 import { Onboarding } from './Onboarding'
 
 import { getNotes as dbGetNotes, addNote as dbAddNote, deleteNote as dbDeleteNote, getNoteAudio as dbGetNoteAudio, getNotesCount as dbGetNotesCount } from '../background/storage'
@@ -247,11 +248,18 @@ export function App() {
           reader.readAsArrayBuffer(file)
         })
 
-        // Store the PDF buffer and name in session storage for the reader page
-        await chrome.storage.session.set({
-          pdfBuffer: buffer,
-          pdfName: file.name,
-        })
+        // chrome.storage only persists JSON-serializable values — a raw
+        // ArrayBuffer is dropped to `{}`. Encode to base64 so it round-trips
+        // to the reader page.
+        const pdfData = arrayBufferToBase64(buffer)
+        try {
+          await chrome.storage.session.set({ pdfData, pdfName: file.name })
+        } catch {
+          // session storage quota (~10MB) exceeded; base64 inflates ~33%
+          throw new Error(
+            'This PDF is too large to open (limit ~7 MB). Please try a smaller file.',
+          )
+        }
 
         // Open reader page in a new tab
         const readerUrl = chrome.runtime.getURL('reader/index.html')

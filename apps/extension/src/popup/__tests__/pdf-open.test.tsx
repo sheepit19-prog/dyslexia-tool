@@ -179,11 +179,12 @@ describe('Popup PDF open flow', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } })
 
-    // Wait for the async file reading and storage operations
+    // Wait for the async file reading and storage operations.
+    // The buffer is base64-encoded (chrome.storage cannot persist ArrayBuffer).
     await waitFor(() => {
       expect(chrome.storage.session.set).toHaveBeenCalledWith(
         expect.objectContaining({
-          pdfBuffer: expect.any(ArrayBuffer),
+          pdfData: expect.any(String),
           pdfName: 'my-document.pdf',
         }),
       )

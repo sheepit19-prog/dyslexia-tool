@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePdfDocument } from './hooks/usePdfDocument'
 import { PageCanvas } from './components/PageCanvas'
+import { ReadingView, DEFAULT_READING_FONT_SIZE_PX } from './components/ReadingView'
+import { FontSizeControl } from './components/FontSizeControl'
 import { PageNavigation } from './components/PageNavigation'
 import { FeatureToolbar, useInitialFeatureStates } from './components/FeatureToolbar'
 import { FileDropZone } from './components/FileDropZone'
 import { ErrorBanner } from './components/ErrorBanner'
 import { PasswordDialog } from './components/PasswordDialog'
 import type { ErrorType } from './components/ErrorBanner'
+import { base64ToArrayBuffer } from '../shared/encoding'
 
-import { applyFontStyles, removeFontStyles } from './features/font-injection'
-import { applyBionicToLayer, removeBionicFromLayer } from './features/bionic-reading'
 import { createRuler, destroyRuler } from './features/reading-ruler'
 
 const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024
@@ -39,8 +40,8 @@ export function App() {
   const [fontEnabled, setFontEnabled] = useState(false)
   const [bionicEnabled, setBionicEnabled] = useState(false)
   const [rulerEnabled, setRulerEnabled] = useState(false)
+  const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE_PX)
 
-  const textLayerRef = useRef<HTMLElement | null>(null)
   const rulerRef = useRef<HTMLElement | null>(null)
 
   const { features: initialFeatures } = useInitialFeatureStates()
@@ -77,48 +78,17 @@ export function App() {
     }
   }, [initialFeatures])
 
-  // Apply font when toggled OR text layer becomes available
-  const applyFontIfActive = useCallback(() => {
-    const container = textLayerRef.current
-    if (!container || !fontEnabled) return
-    const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
-    applyFontStyles(container, { fontFamily, lineSpacing: 1.6, letterSpacing: 0.05 })
-  }, [fontEnabled, initialFeatures?.fontFamily])
-
-  const removeFontIfNeeded = useCallback(() => {
-    const container = textLayerRef.current
-    if (!container) return
-    removeFontStyles(container)
-  }, [])
-
+  // Restore the persisted reading-mode text size on mount
   useEffect(() => {
-    if (fontEnabled) {
-      applyFontIfActive()
-    } else {
-      removeFontIfNeeded()
-    }
-  }, [fontEnabled, applyFontIfActive, removeFontIfNeeded])
-
-  // Apply bionic when toggled OR text layer becomes available
-  const applyBionicIfActive = useCallback(() => {
-    const container = textLayerRef.current
-    if (!container || !bionicEnabled) return
-    applyBionicToLayer(container)
-  }, [bionicEnabled])
-
-  const removeBionicIfNeeded = useCallback(() => {
-    const container = textLayerRef.current
-    if (!container) return
-    removeBionicFromLayer(container)
+    chrome.storage.local
+      .get('readerFontSize')
+      .then((result) => {
+        if (typeof result?.readerFontSize === 'number') {
+          setReadingFontSize(result.readerFontSize)
+        }
+      })
+      .catch(() => { /* no-op */ })
   }, [])
-
-  useEffect(() => {
-    if (bionicEnabled) {
-      applyBionicIfActive()
-    } else {
-      removeBionicIfNeeded()
-    }
-  }, [bionicEnabled, applyBionicIfActive, removeBionicIfNeeded])
 
   // Ruler
   useEffect(() => {
@@ -132,32 +102,17 @@ export function App() {
     }
   }, [rulerEnabled])
 
-  // When text layer is rebuilt (page change), store ref and re-apply active features
-  const handleTextLayerReady = useCallback(() => {
-    const el = document.querySelector('.text-layer') as HTMLElement | null
-    textLayerRef.current = el
-    if (!el) return
-
-    if (fontEnabled) {
-      const fontFamily = initialFeatures?.fontFamily ?? 'OpenDyslexic'
-      applyFontStyles(el, { fontFamily, lineSpacing: 1.6, letterSpacing: 0.05 })
-    }
-    if (bionicEnabled) {
-      applyBionicToLayer(el)
-    }
-  }, [fontEnabled, bionicEnabled, initialFeatures?.fontFamily])
-
   // Popup handoff on mount
   useEffect(() => {
     const check = async () => {
       try {
-        const result = await chrome.storage.session.get('pdfBuffer')
-        if (result.pdfBuffer) {
-          const buffer = result.pdfBuffer.buffer ?? result.pdfBuffer
+        const result = await chrome.storage.session.get(['pdfData', 'pdfName'])
+        if (result.pdfData) {
+          const buffer = base64ToArrayBuffer(result.pdfData)
           setPdfBuffer(buffer)
           setPdfName(result.pdfName ?? null)
           if (buffer.byteLength > LARGE_FILE_THRESHOLD) setShowSizeWarning(true)
-          await chrome.storage.session.remove('pdfBuffer')
+          await chrome.storage.session.remove(['pdfData', 'pdfName'])
         }
       } catch { /* no-op */ }
     }
@@ -184,7 +139,6 @@ export function App() {
       rulerRef.current = null
     }
     setRulerEnabled(false)
-    textLayerRef.current = null
   }, [pdfBuffer])
 
   // Cleanup ruler on unmount
@@ -236,9 +190,19 @@ export function App() {
 
   const handleErrorDismiss = useCallback(() => setDismissedError('scanned'), [])
 
+  const handleFontSizeChange = useCallback((next: number) => {
+    setReadingFontSize(next)
+    chrome.storage.local.set({ readerFontSize: next }).catch(() => { /* no-op */ })
+  }, [])
+
   const state = pdf ? 'ready' : loading || passwordNeeded ? 'loading' : error ? 'error' : 'idle'
   const featuresApplicable = hasTextContent !== false
   const showScannedBanner = state === 'ready' && hasTextContent === false && dismissedError !== 'scanned'
+
+  // Reading mode: when a text feature is on, show reflowed text instead of the
+  // canvas. Falls back to canvas when the page has no extractable text.
+  const readingMode = fontEnabled || bionicEnabled
+  const showReading = readingMode && hasTextContent !== false
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
@@ -265,6 +229,10 @@ export function App() {
             fontFamily={initialFeatures?.fontFamily}
             ttsSpeed={initialFeatures?.ttsSpeed}
           />
+        )}
+
+        {state === 'ready' && showReading && (
+          <FontSizeControl value={readingFontSize} onChange={handleFontSizeChange} />
         )}
       </header>
 
@@ -300,13 +268,25 @@ export function App() {
         )}
 
         {state === 'ready' && pdf && (
-          <div className="flex-1 flex items-start justify-center py-4">
-            <PageCanvas
-              pdf={pdf}
-              pageNumber={currentPage}
-              onTextContentExtracted={handleTextContentExtracted}
-              onTextLayerReady={handleTextLayerReady}
-            />
+          <div className="flex-1 flex items-start justify-center py-4 w-full">
+            {showReading ? (
+              <ReadingView
+                pdf={pdf}
+                pageNumber={currentPage}
+                fontFamily={fontEnabled ? (initialFeatures?.fontFamily ?? 'OpenDyslexic') : undefined}
+                fontSize={readingFontSize}
+                lineSpacing={fontEnabled ? 1.6 : 1.5}
+                letterSpacing={fontEnabled ? 0.05 : 0}
+                bionicEnabled={bionicEnabled}
+                onTextContentExtracted={handleTextContentExtracted}
+              />
+            ) : (
+              <PageCanvas
+                pdf={pdf}
+                pageNumber={currentPage}
+                onTextContentExtracted={handleTextContentExtracted}
+              />
+            )}
           </div>
         )}
       </main>
