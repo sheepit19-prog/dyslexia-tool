@@ -128,6 +128,14 @@ export async function sendTabMessage<T extends keyof MessageMap>(
 ): Promise<MessageMap[T]['response']> {
   return new Promise((resolve) => {
     chrome.tabs.sendMessage(tabId, { type, payload }, (response) => {
+      // No content script in this tab (tab opened before the extension loaded,
+      // or a restricted page like chrome://). Read lastError to suppress
+      // Chrome's "Unchecked runtime.lastError" console warning, then resolve
+      // undefined so callers' try/catch can treat it as a no-op.
+      if (chrome.runtime.lastError) {
+        resolve(undefined as unknown as MessageMap[T]['response'])
+        return
+      }
       resolve(response)
     })
   })
