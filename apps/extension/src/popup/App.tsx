@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Settings } from '../shared/types/storage'
 import { sendTabMessage } from '../shared/types/messages'
 import { arrayBufferToBase64 } from '../shared/encoding'
+import { FONT_FAMILY_OPTIONS } from '../shared/fonts'
 import { Onboarding } from './Onboarding'
 
 import { getNotes as dbGetNotes, addNote as dbAddNote, deleteNote as dbDeleteNote, getNoteAudio as dbGetNoteAudio, getNotesCount as dbGetNotesCount } from '../background/storage'
@@ -89,6 +90,22 @@ export function App() {
       try {
         await sendTabMessage(tab.id, 'FONT_APPLY_SETTINGS', { enabled, fontFamily: settings.fontFamily, lineHeight: settings.lineSpacing, letterSpacing: settings.letterSpacing })
       } catch { /* content script not loaded */ }
+    }
+  }
+
+  const changeFont = async (fontFamily: Settings['fontFamily']) => {
+    const newSettings = { ...settings, fontFamily }
+    setSettings(newSettings)
+    await chrome.storage.local.set({ settings: newSettings })
+    // Re-apply live only when the font override is already on, so the new face
+    // shows immediately without forcing it onto pages the user hasn't enabled.
+    if (settings.fontEnabled) {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      if (tab?.id) {
+        try {
+          await sendTabMessage(tab.id, 'FONT_APPLY_SETTINGS', { enabled: true, fontFamily, lineHeight: settings.lineSpacing, letterSpacing: settings.letterSpacing })
+        } catch { /* content script not loaded */ }
+      }
     }
   }
 
@@ -315,14 +332,26 @@ export function App() {
       <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '16px', color: '#111827' }}>Dyslexia Tool</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
-          <div>
-            <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Dyslexia Font</p>
-            <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Apply dyslexia-friendly font</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Dyslexia Font</p>
+              <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Apply dyslexia-friendly font</p>
+            </div>
+            <button onClick={() => toggleFont(!settings.fontEnabled)} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: settings.fontEnabled ? '#3B82F6' : '#D1D5DB' }}>
+              <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: settings.fontEnabled ? '28px' : '4px' }} />
+            </button>
           </div>
-          <button onClick={() => toggleFont(!settings.fontEnabled)} style={{ position: 'relative', width: '48px', height: '24px', borderRadius: '9999px', border: 'none', cursor: 'pointer', backgroundColor: settings.fontEnabled ? '#3B82F6' : '#D1D5DB' }}>
-            <div style={{ position: 'absolute', top: '4px', width: '16px', height: '16px', backgroundColor: '#fff', borderRadius: '9999px', transition: 'transform 0.2s', left: settings.fontEnabled ? '28px' : '4px' }} />
-          </button>
+          <select
+            value={settings.fontFamily}
+            onChange={(e) => changeFont(e.target.value as Settings['fontFamily'])}
+            aria-label="Font family"
+            style={{ width: '100%', padding: '8px 10px', fontSize: '14px', color: '#111827', backgroundColor: '#fff', border: '1px solid #D1D5DB', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            {FONT_FAMILY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#F9FAFB', borderRadius: '8px' }}>
