@@ -1,3 +1,5 @@
+import { buildFontFaceCss } from '../../shared/fonts'
+
 export interface FontSettings {
   fontFamily: string
   lineSpacing: number
@@ -7,7 +9,7 @@ export interface FontSettings {
 let fontFaceLoaded = false
 
 /**
- * Injects @font-face declarations for OpenDyslexic into the reader page.
+ * Injects @font-face declarations for the bundled fonts into the reader page.
  * Must be called once before font-family changes take effect.
  */
 export function ensureFontFaceLoaded(): void {
@@ -16,22 +18,7 @@ export function ensureFontFaceLoaded(): void {
 
   const style = document.createElement('style')
   style.id = 'dyslexia-tool-font-face'
-  style.textContent = `
-    @font-face {
-      font-family: 'OpenDyslexic';
-      src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Regular.woff2')}') format('woff2');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'OpenDyslexic';
-      src: url('${chrome.runtime.getURL('fonts/OpenDyslexic-Bold.woff2')}') format('woff2');
-      font-weight: bold;
-      font-style: normal;
-      font-display: swap;
-    }
-  `
+  style.textContent = buildFontFaceCss()
   document.head.appendChild(style)
 }
 

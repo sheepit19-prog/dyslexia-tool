@@ -72,7 +72,7 @@ export function ReadingView({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load the OpenDyslexic @font-face once.
+  // Load the bundled @font-face declarations once.
   useEffect(() => {
     ensureFontFaceLoaded()
   }, [])

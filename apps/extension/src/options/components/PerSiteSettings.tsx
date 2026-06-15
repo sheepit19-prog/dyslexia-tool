@@ -16,6 +16,7 @@ import {
 import { Toggle } from './ui/Toggle'
 import { Slider } from './ui/Slider'
 import { Select } from './ui/Select'
+import { FONT_FAMILY_OPTIONS } from '../../shared/fonts'
 
 interface OverrideDisplay {
   label: string
@@ -44,14 +45,6 @@ function getOverrides(preference: SitePreference): OverrideDisplay[] {
 
   return overrides
 }
-
-const FONT_OPTIONS = [
-  { value: 'Helvetica', label: 'Helvetica' },
-  { value: 'OpenDyslexic', label: 'OpenDyslexic' },
-  { value: 'Arial', label: 'Arial' },
-  { value: 'Verdana', label: 'Verdana' },
-  { value: 'system', label: 'System Default' }
-]
 
 const THEME_OPTIONS = [
   { value: 'light', label: 'Light' },
@@ -180,7 +173,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ preference, onUpdate }) => {
               <Select
                 label=""
                 value={editFontFamily ?? 'OpenDyslexic'}
-                options={FONT_OPTIONS}
+                options={FONT_FAMILY_OPTIONS}
                 onChange={(v: string) => setEditFontFamily(v as SitePreference['fontFamily'])}
               />
             </div>
