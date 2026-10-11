@@ -156,7 +156,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div style={iconStyle}>📖</div>
           <h2 style={headingStyle}>Let's make reading easier for you.</h2>
           <p style={descriptionStyle}>
-            Dyslexia Tool helps you as you browse the web. It applies dyslexia-friendly fonts to pages you visit, reads text aloud, and lets you capture voice notes — all with no judgment.
+            Dyslexia Tool helps you as you browse the web. It applies dyslexia-friendly fonts to pages you visit, reads text aloud, and lets you capture voice notes. No judgment, ever.
           </p>
         </>
       )
@@ -168,7 +168,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div style={iconStyle}>🎙️</div>
           <h2 style={headingStyle}>Capture your thoughts instantly</h2>
           <p style={descriptionStyle}>
-            Press Ctrl+Shift+N anytime to record a voice note. No need to switch apps or grab a pen — just speak and your note is saved.
+            Press Ctrl+Shift+N anytime to record a voice note. No need to switch apps or grab a pen. Just speak and your note is saved.
           </p>
           <div style={previewBoxStyle}>
             <div style={previewLabelStyle}>Quick voice capture:</div>

@@ -56,7 +56,7 @@ async function handleSaveRecordedNote(
     const audioBlob = new Blob([bytes], { type: mime })
 
     const currentCount = await getNotesCount()
-    const title = `Voice Note #${currentCount + 1} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    const title = `Voice Note #${currentCount + 1} · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     await addNote({
       title,
       audioBlob,

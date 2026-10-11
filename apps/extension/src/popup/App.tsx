@@ -172,7 +172,7 @@ export function App() {
 
         try {
           const currentCount = await dbGetNotesCount()
-          const title = `Voice Note #${currentCount + 1} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+          const title = `Voice Note #${currentCount + 1} · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
           await dbAddNote({
             title,
             audioBlob,
