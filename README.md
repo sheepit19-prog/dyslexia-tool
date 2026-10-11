@@ -28,6 +28,16 @@ Open a PDF from the popup ("Open PDF") or drag-and-drop one onto the reader page
 
 The extension injects into web pages and applies real-time transformations to text rendering; the PDF reader is a standalone extension page. No data leaves your browser: all processing is local, and voice notes are stored only in IndexedDB.
 
+## Engineering Notes
+
+A few problems that shaped the current design:
+
+- **Bionic reading froze heavy pages.** The walker called `getComputedStyle` on every node while mutating the DOM, forcing a layout flush per node, and the `MutationObserver` re-triggered on its own inserted spans. Fixed with a cheap tag/inline-style check, a node cap, and pausing the observer during its own writes. Page text is HTML-escaped before re-insertion, so markup on the page cannot execute.
+- **Reading aids had no visible effect on PDFs.** pdf.js draws pages to a canvas with a transparent text layer on top, so fonts and bolding changed nothing a reader could see. The reader now reflows extracted text into a single readable column when a text feature is on, and keeps the canvas view as the default and as the fallback for scanned PDFs.
+- **Opening a PDF from the popup lost the file.** `chrome.storage` cannot persist a raw `ArrayBuffer` (it serializes to `{}`); the handoff now base64-encodes through `chrome.storage.session`.
+- **Turkish characters broke the dyslexia font.** The bundled OpenDyslexic subset lacked Latin Extended glyphs (ğ ş İ ı); replaced with the official full font, verified via its cmap.
+- **MV3 CSP blocked an inline script** in the reader page; theme detection moved into the bundled module.
+
 ## Installation
 
 ### Chrome Web Store
