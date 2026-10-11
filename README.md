@@ -1,6 +1,8 @@
 # Dyslexia Tool
 
-A free, privacy-first Chrome extension for dyslexia reading and writing assistance. Customizable fonts, bionic reading, text-to-speech, a reading ruler, spell checking, voice notes — and a built-in **PDF reader** that applies the same reading aids to local PDFs. Everything runs locally in the browser; no data ever leaves your device.
+[![CI](https://github.com/sheepit19-prog/dyslexia-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/sheepit19-prog/dyslexia-tool/actions/workflows/ci.yml)
+
+A free, privacy-first Chrome extension for dyslexia reading and writing assistance. Customizable fonts, bionic reading, text-to-speech, a reading ruler, spell checking, voice notes, and a built-in **PDF reader** that applies the same reading aids to local PDFs. Everything runs locally in the browser; no data ever leaves your device.
 
 > Available on the [Chrome Web Store](https://chromewebstore.google.com/detail/hkingdeoobbaddphljhgolilcdlfhkfe).
 
@@ -8,15 +10,15 @@ A free, privacy-first Chrome extension for dyslexia reading and writing assistan
 
 | Feature | Description | Shortcut |
 |---|---|---|
-| **Dyslexia-Friendly Fonts** | Switch to OpenDyslexic, Arial, or Verdana with adjustable letter/line spacing | `Ctrl+Shift+F` |
+| **Dyslexia-Friendly Fonts** | Helvetica (default), OpenDyslexic, Lexend, Atkinson Hyperlegible, Arial or Verdana, with adjustable letter/line spacing | `Ctrl+Shift+F` |
 | **Bionic Reading** | Bold the leading part of each word to guide eye movement | `Ctrl+Shift+B` |
-| **Read Aloud (TTS)** | Text-to-speech with adjustable speed (0.5×–2.0×) | `Ctrl+Shift+R` |
+| **Read Aloud (TTS)** | Text-to-speech with adjustable speed (0.5× to 2.0×) | `Ctrl+Shift+R` |
 | **Reading Ruler** | Highlight the current line to reduce visual clutter | `Ctrl+Shift+L` |
-| **PDF Reader** | Open local PDFs and apply the reading aids via a clean reflowed reading mode | — |
-| **Spell Checking** | Real-time spelling suggestions while typing on any page | — |
-| **Voice Notes** | Record and store audio notes locally (IndexedDB) | — |
-| **Site Preferences** | Per-website settings that override global defaults | — |
-| **Dark Mode** | Light, dark, and system-following themes | — |
+| **PDF Reader** | Open local PDFs and apply the reading aids via a clean reflowed reading mode | - |
+| **Spell Checking** | Suggests fixes for common dyslexic misspellings as you type (built-in word list) | - |
+| **Voice Notes** | Record and store audio notes locally (IndexedDB) | - |
+| **Site Preferences** | Per-website settings that override global defaults | - |
+| **Dark Mode** | Light, dark, and system-following themes | - |
 
 ## PDF Reader
 
@@ -24,7 +26,7 @@ Open a PDF from the popup ("Open PDF") or drag-and-drop one onto the reader page
 
 ## How It Works
 
-The extension injects into web pages and applies real-time transformations to text rendering; the PDF reader is a standalone extension page. No data leaves your browser — all processing is local, and voice notes are stored only in IndexedDB.
+The extension injects into web pages and applies real-time transformations to text rendering; the PDF reader is a standalone extension page. No data leaves your browser: all processing is local, and voice notes are stored only in IndexedDB.
 
 ## Installation
 
